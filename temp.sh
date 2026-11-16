@@ -1,26 +1,18 @@
 
 #!/bin/bash
-#SBATCH --job-name=fed_ddpm
+#SBATCH --job-name=weighted_sampling
 #SBATCH --partition=calder-gpu-hopper
 #SBATCH --gres=gpu:nvidia_h200:1
-#SBATCH --ntasks=1
 #SBATCH --cpus-per-task=12
 #SBATCH --mem=48G
 #SBATCH --time=08:00:00
-#SBATCH --output=/users/sc21s2j/fed_diff/slurm-%j.out
-
-set -e
-
-# Set Calder software environment
-export MODULEPATH=/uol/apps/calder/modules
+#SBATCH --output=/users/sc21s2j/weighted_sampling/outputs/slurm-%j.out
 
 module load calder/hopper miniforge3
-conda activate diffusion
+conda activate ws
 
-# Go to project directory
-cd /users/sc21s2j/fed_diff
+cd /users/sc21s2j/weighted_sampling
 
-# Start 10 clients with 3 concurrent processes
-python -u launcher.py \
-    --num-clients 10 \
-    --num-workers 3
+python -u run_train_diff_os.py
+
+

@@ -7,7 +7,7 @@ def parse_args():
 
     '''specify'''
     server_prefix = "/scratch-calder/users/sc21s2j"
-    parser.add_argument("--result_fp", type=str, default=f"{server_prefix}/ws/results/")
+    parser.add_argument("--results_dir", type=str, default=f"{server_prefix}/weighted_sampling/results/")
     parser.add_argument("--dataset_dir", type=str, default=f"{server_prefix}/dataset/")
     parser.add_argument("--seed", type=int)
     parser.add_argument("--option", type=str, default="")

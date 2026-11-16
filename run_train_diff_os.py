@@ -21,4 +21,4 @@ if __name__ == "__main__":
         tasks.append(cmd)
 
 
-    run_all_tasks(tasks, num_workers=8)
+    run_all_tasks(tasks, num_workers=5)

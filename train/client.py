@@ -2,10 +2,8 @@ import math
 import copy
 import torch
 from torch import device, nn
-from torch.cuda.amp import autocast, GradScaler
 from tqdm import tqdm
 from args import args
-from train import model
 from diffusers import DDPMScheduler
 import torch.nn.functional as F
 from torchvision.utils import save_image
@@ -93,7 +91,7 @@ def train_diff_os(client, client_loader, global_model,):
         # Save model after every epoch
         torch.save(
             client_model.state_dict(),
-             f"/scratch-calder/users/sc21s2j/ws/results/client{client}_ddpm_model.pth"
+             f"{args.results_dir}/client{client}_ddpm_model.pth"
         )
 
     del client_model
@@ -125,7 +123,7 @@ def test_diff(model):
 
         save_image(
             x,
-            "outputs/generated.png",
+            f"{args.results_dir}/generated.png",
             nrow=4
         )
 
