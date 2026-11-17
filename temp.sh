@@ -8,7 +8,9 @@
 #SBATCH --time=08:00:00
 #SBATCH --output=/users/sc21s2j/weighted_sampling/outputs/slurm-%j.out
 
-module load calder/hopper miniforge3
+# module load calder/hopper miniforge3
+# module load miniforge/24.7.1
+
 conda activate ws
 
 cd /users/sc21s2j/weighted_sampling

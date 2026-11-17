@@ -6,9 +6,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     '''specify'''
-    server_prefix = "/scratch-calder/users/sc21s2j"
-    parser.add_argument("--results_dir", type=str, default=f"{server_prefix}/weighted_sampling/results/")
-    parser.add_argument("--dataset_dir", type=str, default=f"{server_prefix}/dataset/")
+    parser.add_argument("--server", type=str)
     parser.add_argument("--seed", type=int)
     parser.add_argument("--option", type=str, default="")
     parser.add_argument("--record_data", type=bool, default=False)
@@ -30,9 +28,28 @@ def parse_args():
     else:
         res = parser.parse_args()
 
+    if res.server == "calder":
+        server_prefix = "/scratch-calder/users/sc21s2j"
+        res.results_dir = f"{server_prefix}/weighted_sampling/results/"
+        res.dataset_dir = f"{server_prefix}/dataset/"
+    elif res.server == "aire":
+        server_prefix = "/scratch/users/sc21s2j"
+        res.results_dir = f"{server_prefix}/weighted_sampling/results/"
+        res.dataset_dir = f"{server_prefix}/dataset/"
+    elif res.server == "swjtu":
+        server_prefix = "/home/sc21s2j"
+        res.results_dir = f"{server_prefix}/weighted_sampling/results/"
+        res.dataset_dir = f"{server_prefix}/dataset/"
+    elif res.server == "mine":
+        server_prefix = "/users/sc21s2j"
+        res.results_dir = f"{server_prefix}/weighted_sampling/results/"
+        res.dataset_dir = f"{server_prefix}/dataset/"
+    else:
+        raise ValueError(f"Unknown server: {res.server}")
+
+
     res.batch_size = 32
-    # res.test_batchsize = 32
-    res.train_ratio = 1.0  # for methods requiring validation
+    res.train_ratio = 1.0
     res.client_selected_ratio = 0.15
 
     res.num_classes = 10
