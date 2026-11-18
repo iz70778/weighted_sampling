@@ -1,21 +1,15 @@
-from copy import deepcopy
-import os
-import torch
-from tqdm import tqdm
-from config import args
-from train import client
-from torchvision.utils import save_image
-from train.diff_utils import linear_scheduler
-from scripts.init import client_loaders, global_model
-from cleanfid import fid
-import numpy as np
-import torch
-
-
 import io
-import numpy as np
+import os
+from copy import deepcopy
 from dataclasses import dataclass
-from train.diff_utils import linear_scheduler
+
+import numpy as np
+import torch
+from torchvision.utils import save_image
+from tqdm import tqdm
+
+from config import args, linear_scheduler, global_model
+
 
 @dataclass
 class Parameters:
@@ -37,6 +31,7 @@ def parameters_to_ndarrays(parameters):
         np.load(io.BytesIO(tensor), allow_pickle=False)
         for tensor in parameters.tensors
     ]
+
 
 def get_step_size(alpha_bar_t, rho, p):
     assert (p >= 1.0) and (rho <= 0.5)
@@ -82,54 +77,38 @@ if __name__ == "__main__":
     img_path = f"{args.results_path}/imgs/dfd"
     os.makedirs(img_path, exist_ok=True)
 
-    batch_size = 100
-    total_samples = 5000
-    device = args.device
-
-    # Load all client models
     client_models = []
-    
-    for client_id in range(args.num_clients):
+    for client in range(args.num_clients):
         model = deepcopy(global_model)
         model.load_state_dict(
             torch.load(
-                f"{args.results_path}/0.1/client{client_id}_ddpm_model.pth",
+                f"{args.results_path}/models/os/client{client}.pth",
                 map_location="cpu"
             )
         )
-        model.to(device)
+        model.to(args.device)
         model.eval()
         client_models.append(model)
 
-    # Set diffusion timesteps
     linear_scheduler.set_timesteps(args.T)
 
-    # Generate synthetic images
     with torch.no_grad():
-        for start in tqdm(range(0, total_samples, batch_size), desc="Generating"):
-            current_batch_size = min(batch_size, total_samples - start)
+        for start in tqdm(range(0, args.num_samplings, args.test_batchsize), desc="Generating"):
+            current_batch_size = min(args.test_batchsize, args.num_samplings - start)
 
-            # Initialize Gaussian noise at server
             x = torch.randn(
-                current_batch_size, 3, 32, 32, device=device
+                current_batch_size, 3, args.image_size, args.image_size, device=args.device
             )
 
-            # Cooperative sampling
             for t in linear_scheduler.timesteps:
-
-                # Collect noise predictions from all clients
                 noises = []
                 for model in client_models:
                     noise_pred = model(x, t).sample
                     noises.append(noise_pred)
 
-                # Server aggregates scores and performs ULA
                 x = aggregate_fit(x, t, noises)
 
-            # Save generated images
             x = (x.clamp(-1, 1) + 1) / 2
 
             for j, img in enumerate(x):
                 save_image(img, f"{img_path}/{start + j:05d}.png")
-
-    

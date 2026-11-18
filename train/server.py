@@ -1,13 +1,12 @@
 import math
-import time
+from venv import logger
 
 import numpy as np
 import torch
-from torch import nn
 from tqdm import tqdm
 
 from config import args
-from train.client import train_client, train_diff_os
+from train.client import train_client
 
 
 def fed_avg(global_model, client_loaders, test_loader):
@@ -67,5 +66,5 @@ def validate_model(model, test_loader):
 def fed_diff_os(global_model, client_loaders, test_loader):
     clients = np.arange(len(client_loaders))
     for _, client in enumerate(clients):
-       print(f"Training client {client}...")
+       logger.info(f"Training client {client}...")
        train_diff_os(client, client_loaders[client], global_model)

@@ -1,12 +1,10 @@
-import math
 import copy
+import math
+
 import torch
 from torch import nn
+
 from config import args
-from train.diff_utils import linear_scheduler
-
-import torch.nn.functional as F
-
 
 criterion = nn.CrossEntropyLoss()
 
@@ -51,42 +49,4 @@ def train_client(client_loader, global_model, cur_round):
 
     return local_state
 
-
-def train_diff_os(client, client_loader, global_model,):
-    client_model = copy_global_model(global_model)
-    optimizer = torch.optim.AdamW(
-        client_model.parameters(),
-        lr=args.lr
-    )
-    for epoch in range(args.client_epochs):
-        client_model.train()
-        total_loss = 0.0
-        # progress = tqdm(client_loader, desc=f"Epoch {epoch+1}/{args.client_epochs}")
-        for x0, _, _, _ in  client_loader:
-            x0 = x0.to(args.device)
-            B = x0.shape[0]
-            t = torch.randint(
-                0, args.T, (B,), device=args.device
-            ).long()
-            noise = torch.randn_like(x0)
-            xt = linear_scheduler.add_noise(x0, noise, t)
-            noise_pred = client_model(xt, t).sample
-            loss = F.mse_loss(noise_pred, noise)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.item()
-            # progress.set_postfix(loss=loss.item())
-
-        avg_loss = total_loss / len(client_loader)
-        print(f"Client {client} - Epoch {epoch+1}: Loss = {avg_loss:.4f}")
-
-        # Save model after every epoch
-        torch.save(
-            client_model.state_dict(),
-             f"{args.results_path}/client{client}_ddpm_model.pth"
-        )
-
-    del client_model
-    del optimizer
 
