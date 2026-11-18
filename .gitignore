@@ -5,7 +5,7 @@
 .idea/
 
 # temp
-.temp/
+temp/
 
 # Python caches and virtual environments
 __pycache__/
@@ -19,11 +19,8 @@ venv/
 # Jupyter
 .ipynb_checkpoints/
 
-# OS files
-.DS_Store
-Thumbs.db
-
 # results
 results/
 outputs/
 models/
+*.pt
