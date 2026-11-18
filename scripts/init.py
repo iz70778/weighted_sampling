@@ -2,7 +2,7 @@ import random
 
 from torch.utils.data import DataLoader
 
-from args import args
+from config import args
 from train.model import CNN_MNIST, CNN_CIFAR_10, CNN_FMNIST, ResNet_CIFAR100, ResNet_18
 from diffusers import UNet2DModel
 
@@ -29,7 +29,7 @@ from data.fetch import (
     fetch_dataset_tiny_imagenet,
     fetch_dataset_cinic10,
 )
-from args import args
+from config import args
 import torch.multiprocessing as mp
 
 mp.set_start_method("spawn", force=True)

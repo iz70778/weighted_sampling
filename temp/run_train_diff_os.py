@@ -6,19 +6,20 @@ if __name__ == "__main__":
 
     seed = 0
     dataset = 'cifar10'
-    dirichlet_alpha = -0.0
-    num_clients = 10
+    dirichlet_alpha = 0.1
+    num_clients = 1
 
     for client_id in range(num_clients):
         cmd = [
-            "python", "scripts/train_diff_os.py",
+            "python", "-u", "scripts/train_diff_os.py",
             "--seed", str(seed),
             "--dataset", dataset,
             "--dirichlet_alpha", str(dirichlet_alpha),
             "--num_clients", str(num_clients),
-            "--client_id", str(client_id)
+            "--client_id", str(client_id),
+            "--server", "mine"
         ]
         tasks.append(cmd)
 
 
-    run_all_tasks(tasks, num_workers=5)
+    run_all_tasks(tasks, num_workers=1)

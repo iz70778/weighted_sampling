@@ -1,4 +1,4 @@
-from args import args
+from config import args
 from train import client
 from train.client import train_diff_os
 from scripts.init import global_model, client_loaders

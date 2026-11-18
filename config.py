@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 import sys
 
 
@@ -12,7 +13,6 @@ def parse_args():
     parser.add_argument("--record_data", type=bool, default=False)
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--test_batchsize", type=int, default=32)
-
     """server"""
     parser.add_argument("--num_clients", type=int)
 
@@ -30,25 +30,22 @@ def parse_args():
 
     if res.server == "calder":
         server_prefix = "/scratch-calder/users/sc21s2j"
-        res.results_dir = f"{server_prefix}/weighted_sampling/results/"
-        res.dataset_dir = f"{server_prefix}/dataset/"
+        res.results_path = f"{server_prefix}/weighted_sampling/results/"
+        res.dataset_path = f"{server_prefix}/dataset/"
     elif res.server == "aire":
         server_prefix = "/scratch/users/sc21s2j"
-        res.results_dir = f"{server_prefix}/weighted_sampling/results/"
-        res.dataset_dir = f"{server_prefix}/dataset/"
+        res.results_path = f"{server_prefix}/weighted_sampling/results/"
+        res.dataset_path = f"{server_prefix}/dataset/"
     elif res.server == "swjtu":
-        server_prefix = "/home/sc21s2j"
-        res.results_dir = f"{server_prefix}/weighted_sampling/results/"
-        res.dataset_dir = f"{server_prefix}/dataset/"
+        # todo
+        raise ValueError("swjtu server not supported yet")
     elif res.server == "mine":
-        server_prefix = "/users/sc21s2j"
-        res.results_dir = f"{server_prefix}/weighted_sampling/results/"
-        res.dataset_dir = f"{server_prefix}/dataset/"
+        res.results_path = "F:/pycodes/weighted_sampling/results"
+        res.dataset_path = "F:/data"
     else:
         raise ValueError(f"Unknown server: {res.server}")
 
 
-    res.batch_size = 32
     res.train_ratio = 1.0
     res.client_selected_ratio = 0.15
 
@@ -59,7 +56,7 @@ def parse_args():
     if  res.dataset in ['cifar10']:
         res.client_epochs = 50
         res.image_size = 32
-        res.batch_size = 32
+        res.batch_size = 256
         res.lr = 1e-4
         res.T = 1000
     return res

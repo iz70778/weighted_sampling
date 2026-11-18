@@ -6,7 +6,7 @@ import torch
 from torch import nn
 from tqdm import tqdm
 
-from args import args
+from config import args
 from train.client import train_client, train_diff_os
 
 

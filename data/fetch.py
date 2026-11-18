@@ -1,6 +1,6 @@
 import os
 
-import args
+from config import args
 import torchvision
 from torchvision import transforms as transforms
 
@@ -13,14 +13,14 @@ def fetch_dataset_mnist():
     ])
 
     train_data = torchvision.datasets.MNIST(
-        args.dataset_dir + r'/mnist',
+        args.dataset_path + r'/mnist',
         train=True,
         download=True,
         transform=transform,
     )
 
     test_data = torchvision.datasets.MNIST(
-        args.dataset_dir + r'/mnist',
+        args.dataset_path + r'/mnist',
         train=False,
         download=True,
         transform=transform
@@ -36,14 +36,14 @@ def fetch_dataset_fmnist():
     ])
 
     train_data = torchvision.datasets.FashionMNIST(
-        args.dataset_dir + r'/fmnist',
+        args.dataset_path + r'/fmnist',
         train=True,
         download=True,
         transform=transform,
     )
 
     test_data = torchvision.datasets.FashionMNIST(
-        args.dataset_dir + r'/fmnist',
+        args.dataset_path + r'/fmnist',
         train=False,
         download=True,
         transform=transform
@@ -65,16 +65,16 @@ def fetch_dataset_cifar10():
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
-
+    
     train_data = torchvision.datasets.CIFAR10(
-        args.dataset_dir + r'/cifar10',
+        args.dataset_path + r'/cifar10',
         train=True,
         download=True,
         transform=transform_train
     )
 
     test_data = torchvision.datasets.CIFAR10(
-        args.dataset_dir + r'/cifar10',
+        args.dataset_path + r'/cifar10',
         train=False,
         download=True,
         transform=transform_test
@@ -98,14 +98,14 @@ def fetch_dataset_cifar100():
     ])
 
     train_data = torchvision.datasets.CIFAR100(
-        args.dataset_dir + r'/cifar100',
+        args.dataset_path + r'/cifar100',
         train=True,
         download=True,
         transform=transform_train
     )
 
     test_data = torchvision.datasets.CIFAR100(
-        args.dataset_dir + r'/cifar100',
+        args.dataset_path + r'/cifar100',
         train=False,
         download=True,
         transform=transform_test
@@ -115,7 +115,7 @@ def fetch_dataset_cifar100():
 
 
 def fetch_dataset_tiny_imagenet():
-    data_dir = args.dataset_dir + r'/tiny_imagenet'
+    data_dir = args.dataset_path + r'/tiny_imagenet'
 
     IMAGE_SIZE = 64
 
@@ -153,7 +153,7 @@ def fetch_dataset_tiny_imagenet():
 
 
 def fetch_dataset_cinic10():
-    data_dir = args.dataset_dir + r'/cinic10'
+    data_dir = args.dataset_path + r'/cinic10'
 
     mean = [0.47889522, 0.47227842, 0.43047404]
     std = [0.24205776, 0.23828046, 0.25874835]

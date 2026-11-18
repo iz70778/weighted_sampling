@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-from args import args
+from config import args
 
 
 def write_iterable(file_path, iters, model='a', print_file_path=True):
