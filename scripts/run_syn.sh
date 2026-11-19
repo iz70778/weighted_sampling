@@ -6,8 +6,8 @@ export PYTHONHASHSEED=0
 export PYTHONPATH="$PWD"
 
 
-num_clients=5
-test_batchsize=512
+num_clients=1
+test_batchsize=32
 
 for ((client_id=0; client_id<num_clients; client_id++)); do
     python -u -m synthesis.ws \

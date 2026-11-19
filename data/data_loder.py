@@ -6,8 +6,6 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-from config import args
-
 
 def write_iterable(file_path, iters, model='a', print_file_path=True):
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -68,7 +66,7 @@ class PrunableDataset(Dataset):
         self.active_global_indices = list(self.original_global_indices)
 
 
-def iid_partition_loader(data, batch_size):
+def iid_partition_loader(data, batch_size, args):
     """
     partition the dataset into a dataloader for each client, iid style
     """
@@ -103,7 +101,7 @@ def iid_partition_loader(data, batch_size):
     return client_loaders, val_loader
 
 
-def get_primary_classes(client):
+def get_primary_classes(client, args):
     cluster = client % args.num_clusters
     avg = args.num_classes // args.num_clusters
     extra = args.num_classes % args.num_clusters
@@ -113,7 +111,7 @@ def get_primary_classes(client):
     return list(range(start, end))
 
 
-def niid_partition_loader_dirichlet(data, batch_size):
+def niid_partition_loader_dirichlet(data, batch_size, args):
     class_indices = {i: [] for i in range(args.num_classes)}
     for idx, label in enumerate(data.targets):
         class_indices[int(label)].append(idx)
@@ -183,8 +181,8 @@ def niid_partition_loader_dirichlet(data, batch_size):
     return client_loaders, val_loader
 
 
-def partition_client_data(data, batch_size):
+def partition_client_data(data, batch_size, args):
     if args.dirichlet_alpha < 0:
-        return iid_partition_loader(data, batch_size)
+        return iid_partition_loader(data, batch_size, args)
     else:
-        return niid_partition_loader_dirichlet(data, batch_size)
+        return niid_partition_loader_dirichlet(data, batch_size, args)

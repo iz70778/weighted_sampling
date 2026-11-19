@@ -1,11 +1,10 @@
 import os
 
-from config import args
 import torchvision
 from torchvision import transforms as transforms
 
 
-def fetch_dataset_mnist():
+def fetch_dataset_mnist(args):
     """ Collect MNIST """
     transform = transforms.Compose([
         transforms.ToTensor(),
@@ -29,7 +28,7 @@ def fetch_dataset_mnist():
     return train_data, test_data
 
 
-def fetch_dataset_fmnist():
+def fetch_dataset_fmnist(args):
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.2860,), (0.3530,))
@@ -52,7 +51,7 @@ def fetch_dataset_fmnist():
     return train_data, test_data
 
 
-def fetch_dataset_cifar10():
+def fetch_dataset_cifar10(args):
     transform_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
@@ -83,7 +82,7 @@ def fetch_dataset_cifar10():
     return train_data, test_data
 
 
-def fetch_dataset_cifar100():
+def fetch_dataset_cifar100(args):
     transform_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
@@ -114,7 +113,7 @@ def fetch_dataset_cifar100():
     return train_data, test_data
 
 
-def fetch_dataset_tiny_imagenet():
+def fetch_dataset_tiny_imagenet(args):
     data_dir = args.dataset_path + r'/tiny_imagenet'
 
     IMAGE_SIZE = 64
@@ -152,7 +151,7 @@ def fetch_dataset_tiny_imagenet():
     return train_data, test_data
 
 
-def fetch_dataset_cinic10():
+def fetch_dataset_cinic10(args):
     data_dir = args.dataset_path + r'/cinic10'
 
     mean = [0.47889522, 0.47227842, 0.43047404]

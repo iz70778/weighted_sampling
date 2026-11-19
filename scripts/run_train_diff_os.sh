@@ -6,10 +6,10 @@ export PYTHONHASHSEED=0
 export PYTHONPATH="$PWD"
 
 num_clients=5
-num_workers=2
+num_workers=1
 
 for ((client_id=0; client_id<num_clients; client_id++)); do
-    python -u scripts/train_diff_os.py \
+    python -u -m train.diff_os \
         --client_id "$client_id" \
         --server mine &
     if (( $(jobs -rp | wc -l) >= num_workers )); then

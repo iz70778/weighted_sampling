@@ -1,11 +1,10 @@
-import logging
 import os
 
 import torch
 import torch.nn.functional as F
 from torch.optim.swa_utils import AveragedModel
 
-from config import args, global_model, client_loaders, linear_scheduler
+from config import args, global_model, client_loaders, linear_scheduler, logger
 
 if __name__ == '__main__':
     client = args.client_id
@@ -58,12 +57,12 @@ if __name__ == '__main__':
             # progress.set_postfix(loss=loss.item())
 
         avg_loss = total_loss / len(client_loader)
-        logging.info(f"Client {client} - Epoch {epoch + 1}: Loss = {avg_loss:.4f}")
+        logger.info(f"Client {client} - Epoch {epoch + 1}: Loss = {avg_loss:.4f}")
 
         model_path = f"{args.results_path}/models/os"
         os.makedirs(model_path, exist_ok=True)
 
-        if (epoch + 1) % 100 == 0:
+        if (epoch + 1) % 25 == 0:
             torch.save(
                 ema_model.module.state_dict(),
                 f"{model_path}/client{client}_{epoch}.pth",

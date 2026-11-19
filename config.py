@@ -75,7 +75,7 @@ def init_training():
     torch.backends.cudnn.benchmark = False
 
     if args.dataset == "cifar10":
-        train_data, test_data = fetch_dataset_cifar10()
+        train_data, test_data = fetch_dataset_cifar10(args)
         global_model = UNet2DModel(
             sample_size=args.image_size,
             in_channels=3,
@@ -104,7 +104,7 @@ def init_training():
         )
 
     client_loaders, validate_loader = partition_client_data(
-        train_data, batch_size=args.batch_size
+        train_data, args.batch_size, args
     )
 
     test_loader = DataLoader(
