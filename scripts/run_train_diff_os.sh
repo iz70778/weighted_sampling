@@ -6,7 +6,7 @@ export PYTHONHASHSEED=0
 export PYTHONPATH="$PWD"
 
 num_clients=5
-num_workers=1
+num_workers=5
 
 for ((client_id=0; client_id<num_clients; client_id++)); do
     python -u -m train.diff_os \

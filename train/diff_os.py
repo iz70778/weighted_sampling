@@ -10,11 +10,6 @@ if __name__ == '__main__':
     client = args.client_id
 
     client_model = global_model
-    ema_model = AveragedModel(
-        client_model,
-        avg_fn=lambda ema, current, _: 0.9999 * ema + 0.0001 * current,
-    )
-    ema_model.update_parameters(client_model)
 
     optimizer = torch.optim.Adam(
         client_model.parameters(),
@@ -22,10 +17,6 @@ if __name__ == '__main__':
     )
 
     client_loader = client_loaders[client]
-
-    total_updates = args.client_epochs * len(client_loader)
-    warmup_steps = max(1, round(args.warmup_ratio * total_updates))
-    update_step = 0
 
     for epoch in range(args.client_epochs):
         client_model.train()
@@ -44,14 +35,7 @@ if __name__ == '__main__':
             optimizer.zero_grad()
             loss.backward()
 
-            torch.nn.utils.clip_grad_norm_(client_model.parameters(), max_norm=1.0)
-
-            update_step += 1
-            for group in optimizer.param_groups:
-                group["lr"] = args.lr * min(update_step / warmup_steps, 1.0)
-
             optimizer.step()
-            ema_model.update_parameters(client_model)
 
             total_loss += loss.item()
             # progress.set_postfix(loss=loss.item())
@@ -62,9 +46,9 @@ if __name__ == '__main__':
         model_path = f"{args.results_path}/models/os"
         os.makedirs(model_path, exist_ok=True)
 
-        if (epoch + 1) % 25 == 0:
+        if (epoch + 1) % 100 == 0:
             torch.save(
-                ema_model.module.state_dict(),
+                client_model.state_dict(),
                 f"{model_path}/client{client}_{epoch}.pth",
             )
 
