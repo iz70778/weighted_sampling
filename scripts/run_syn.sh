@@ -6,11 +6,9 @@ export PYTHONHASHSEED=0
 export PYTHONPATH="$PWD"
 
 
-num_clients=5
 test_batchsize=256
 
-python -u -m synthesis.dfd \
-        --num_clients "$num_clients" \
+python -u -m synthesis.cl \
         --test_batchsize "$test_batchsize" \
         --server mine
 

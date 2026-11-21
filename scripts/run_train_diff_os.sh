@@ -8,19 +8,19 @@ export PYTHONPATH="$PWD"
 num_clients=5
 num_workers=5
 
-for ((client_id=0; client_id<num_clients; client_id++)); do
-    python -u -m train.diff_os \
-        --client_id "$client_id" \
-        --server mine &
-    if (( $(jobs -rp | wc -l) >= num_workers )); then
-        wait -n
-    fi
-done
-
-wait
-
-#python -u scripts/train_diff_os.py \
-#        --num_clients 1 \
+#for ((client_id=0; client_id<num_clients; client_id++)); do
+#    python -u -m train.diff_os \
+#        --client_id "$client_id" \
 #        --server mine &
+#    if (( $(jobs -rp | wc -l) >= num_workers )); then
+#        wait -n
+#    fi
+#done
+#
+#wait
+
+python -u -m train.diff_os \
+        --num_clients 1 \
+        --server mine &
 
 echo "All tasks completed."
