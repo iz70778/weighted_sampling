@@ -1,6 +1,9 @@
+import glob
 import os
 
 import torchvision
+from PIL import Image
+from torch.utils.data import Dataset
 from torchvision import transforms as transforms
 
 
@@ -53,27 +56,25 @@ def fetch_dataset_fmnist(args):
 
 def fetch_dataset_cifar10(args):
     transform_train = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
-        transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.05),
         transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        transforms.Normalize((0.5,) * 3, (0.5,) * 3),
     ])
 
     transform_test = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        transforms.Normalize((0.5,) * 3, (0.5,) * 3),
     ])
-    
+
     train_data = torchvision.datasets.CIFAR10(
-        args.dataset_path + r'/cifar10',
+        args.dataset_path + '/cifar10',
         train=True,
         download=True,
         transform=transform_train
     )
 
     test_data = torchvision.datasets.CIFAR10(
-        args.dataset_path + r'/cifar10',
+        args.dataset_path + '/cifar10',
         train=False,
         download=True,
         transform=transform_test
@@ -185,3 +186,33 @@ def fetch_dataset_cinic10(args):
     )
 
     return train_data, test_data
+
+
+
+class SynthesisDataset(Dataset):
+    def __init__(self, img_path, transform=None):
+        self.img_paths = sorted(glob.glob(f"{img_path}/*/*.png"))
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.img_paths)
+
+    def __getitem__(self, idx):
+        img = Image.open(self.img_paths[idx]).convert("RGB")
+
+        if self.transform:
+            img = self.transform(img)
+
+        return img, -1
+
+
+def fetch_syn_dataset(img_path):
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5,) * 3, (0.5,) * 3),
+    ])
+    dataset = SynthesisDataset(
+        img_path=img_path,
+        transform=transform
+    )
+    return dataset, None

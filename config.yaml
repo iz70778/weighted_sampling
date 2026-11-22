@@ -3,11 +3,13 @@ run:
   dataset: cifar10
   device: cuda
   record_data: false
-  test_batchsize: 32
+  test_batchsize: 256
   num_clients: 5
   dirichlet_alpha: 0.1
   client_id: 0
   num_samplings: 5000
+  ddim: true
+
 
 
 training:
@@ -35,6 +37,6 @@ datasets:
     num_classes: 10
     client_epochs: 1000
     image_size: 32
-    batch_size: 32
-    lr: 1.0e-4
+    batchsize: 64
+    lr: 2.0e-4
     T: 1000

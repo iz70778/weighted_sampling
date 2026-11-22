@@ -1,21 +1,13 @@
 import math
 import os
-from decimal import Decimal, getcontext
+from decimal import getcontext, Decimal
 
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-
-def write_iterable(file_path, iters, model='a', print_file_path=True):
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    with open(file_path, model) as f:
-        for i, elem in enumerate(iters):
-            f.write(f"{elem}, ")
-            if (i + 1) % 5 == 0: f.write('\n')
-        f.write('\n')
-    if print_file_path:
-        print(f'written to {file_path}')
+from config import args
+from data.fetch import fetch_dataset_cifar10
 
 
 class PrunableDataset(Dataset):
@@ -66,11 +58,11 @@ class PrunableDataset(Dataset):
         self.active_global_indices = list(self.original_global_indices)
 
 
-def iid_partition_loader(data, batch_size, args):
+def iid_partition_loader(data):
     """
     partition the dataset into a dataloader for each client, iid style
     """
-    client_num_total = int(len(data) * args.train_ratio)
+    client_num_total = len(data)
 
     raws = np.random.lognormal(mean=0, sigma=0.75, size=args.num_clients)
     getcontext().prec = 50
@@ -86,19 +78,11 @@ def iid_partition_loader(data, batch_size, args):
     clients_data = [PrunableDataset(data, indices) for indices in clients_indices]
 
     client_loaders = [
-        DataLoader(x, batch_size=batch_size, shuffle=True)
+        DataLoader(x, batch_size=args.batchsize, shuffle=True)
         for x in clients_data
     ]
 
-    val_indices = all_indices[client_num_total:]
-    val_data = PrunableDataset(data, val_indices.tolist())
-    val_loader = DataLoader(
-        val_data,
-        batch_size=args.test_batchsize,
-        shuffle=False
-    )
-
-    return client_loaders, val_loader
+    return client_loaders
 
 
 def get_primary_classes(client, args):
@@ -111,7 +95,7 @@ def get_primary_classes(client, args):
     return list(range(start, end))
 
 
-def niid_partition_loader_dirichlet(data, batch_size, args):
+def niid_partition_loader_dirichlet(data):
     class_indices = {i: [] for i in range(args.num_classes)}
     for idx, label in enumerate(data.targets):
         class_indices[int(label)].append(idx)
@@ -124,7 +108,7 @@ def niid_partition_loader_dirichlet(data, batch_size, args):
 
     for cls in range(args.num_classes):
         indices = class_indices[cls]
-        num_cls_samples = int(len(indices) * args.train_ratio)
+        num_cls_samples = len(indices)
 
         cls_clients_samples = (class_proportions[cls] * num_cls_samples).astype(int)
 
@@ -152,13 +136,12 @@ def niid_partition_loader_dirichlet(data, batch_size, args):
             selected_indices.append(np.random.choice(len(data), 1)[0])
             print(f'client {client} does not have data, assigned 1 random sample.')
 
-
         client_data = PrunableDataset(data, selected_indices)
-        client_loader = DataLoader(client_data, batch_size=batch_size, shuffle=True)
+        client_loader = DataLoader(client_data, batch_size=args.batchsize, shuffle=True)
         client_loaders.append(client_loader)
 
         if args.record_data:
-            file_path = f'results_seed_{args.seed}/data/{args.dataset}_{args.dirichlet_alpha}_dis.txt'
+            file_path = f'{args.results_path}/{args.dataset}_{args.dirichlet_alpha}_dis.txt'
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
             with open(file_path, 'w' if client == 0 else 'a') as f:
                 labels = [data.targets[i] for i in selected_indices]
@@ -171,18 +154,42 @@ def niid_partition_loader_dirichlet(data, batch_size, args):
     total = sum(len(loader.dataset) for loader in client_loaders)
     args.ratios = [len(loader.dataset) / total for loader in client_loaders]
 
-    val_indices = []
-    for cls in range(args.num_classes):
-        val_indices.extend(class_indices[cls])
-
-    val_data = PrunableDataset(data, val_indices)
-    val_loader = DataLoader(val_data, batch_size=args.test_batchsize, shuffle=False)
-
-    return client_loaders, val_loader
+    return client_loaders
 
 
-def partition_client_data(data, batch_size, args):
-    if args.dirichlet_alpha < 0:
-        return iid_partition_loader(data, batch_size, args)
+def get_test_dataloder():
+    if args.dataset == "cifar10":
+        train_data, test_data = fetch_dataset_cifar10(args)
+        test_loader = DataLoader(
+            PrunableDataset(test_data, range(len(test_data))),
+            batch_size=args.test_batchsize,
+        )
     else:
-        return niid_partition_loader_dirichlet(data, batch_size, args)
+        raise NotImplementedError
+
+    return test_loader
+
+
+def get_cl_train_dataloader():
+    if args.dataset == "cifar10":
+        train_data, test_data = fetch_dataset_cifar10(args)
+        train_loader = DataLoader(
+            PrunableDataset(test_data, range(len(test_data))),
+            batch_size=args.batchsize,
+        )
+    else:
+        raise NotImplementedError
+
+    return train_loader
+
+
+def get_fl_train_dataloader():
+    if args.dataset == "cifar10":
+        train_data, test_data = fetch_dataset_cifar10(args)
+    else:
+        raise NotImplementedError
+
+    if args.dirichlet_alpha < 0:
+        return iid_partition_loader(train_data)
+    else:
+        return niid_partition_loader_dirichlet(train_data)

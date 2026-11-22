@@ -8,7 +8,8 @@ import torch
 from torchvision.utils import save_image
 from tqdm import tqdm
 
-from config import args, linear_scheduler, global_model
+from config import args
+from common_utils import get_diff_model, get_train_scheduler
 
 
 @dataclass
@@ -51,7 +52,8 @@ def ula_step(x, neg_gradlogp, eta):
 
 def aggregate_fit(x, t, noises):
     # Retrieve hyperparmeters
-    alpha_bar_t = linear_scheduler.alphas_cumprod[t].item()
+    train_scheduler = get_train_scheduler()
+    alpha_bar_t = train_scheduler.alphas_cumprod[t].item()
     rho = 0.1
     ord = 1.0
     # rho = 1
@@ -74,15 +76,17 @@ def aggregate_fit(x, t, noises):
 
 
 if __name__ == "__main__":
-    img_path = f"{args.results_path}/imgs/dfd"
-    os.makedirs(img_path, exist_ok=True)
+    os.makedirs(args.img_path, exist_ok=True)
 
     client_models = []
+
+    global_model = get_diff_model()
+
     for client in range(args.num_clients):
         model = deepcopy(global_model)
         model.load_state_dict(
             torch.load(
-                f"{args.results_path}/models/os/client{client}.pth",
+                f"{args.model_path}/client{client}_os.pth",
                 map_location="cpu"
             )
         )
@@ -90,7 +94,8 @@ if __name__ == "__main__":
         model.eval()
         client_models.append(model)
 
-    linear_scheduler.set_timesteps(args.T)
+    train_scheduler = get_train_scheduler()
+    train_scheduler.set_timesteps(args.T)
 
     with torch.no_grad():
         for start in tqdm(range(0, args.num_samplings, args.test_batchsize), desc="Generating"):
@@ -100,7 +105,7 @@ if __name__ == "__main__":
                 current_batch_size, 3, args.image_size, args.image_size, device=args.device
             )
 
-            for t in linear_scheduler.timesteps:
+            for t in train_scheduler.timesteps:
                 noises = []
                 for model in client_models:
                     noise_pred = model(x, t).sample
@@ -111,4 +116,4 @@ if __name__ == "__main__":
             x = (x.clamp(-1, 1) + 1) / 2
 
             for j, img in enumerate(x):
-                save_image(img, f"{img_path}/{start + j:05d}.png")
+                save_image(img, f"{args.img_path}/{start + j:05d}.png")

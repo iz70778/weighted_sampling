@@ -5,13 +5,18 @@ conda activate ttt
 export PYTHONHASHSEED=0
 export PYTHONPATH="$PWD"
 
-
 test_batchsize=256
 
-python -u -m synthesis.cl \
+server=mine
+
+# generate data
+python -u -m synthesis.syn_ws \
         --test_batchsize "$test_batchsize" \
-        --server mine
+        --num_samplings 50000 \
+        --server "$server"
 
-echo "All tasks completed."
+wait
 
+
+# train on generated data
 
