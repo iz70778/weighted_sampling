@@ -24,3 +24,6 @@ results/
 outputs/
 models/
 *.pt
+
+# leeds server scripts
+leeds/

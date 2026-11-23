@@ -23,8 +23,8 @@ servers:
     results_path: /scratch-calder/users/sc21s2j/weighted_sampling/results/
     dataset_path: /scratch-calder/users/sc21s2j/dataset/
   aire:
-    results_path: /scratch/users/sc21s2j/weighted_sampling/results/
-    dataset_path: /scratch/users/sc21s2j/dataset/
+    results_path: /mnt/scratch/sc21s2j/weighted_sampling/results/
+    dataset_path: /mnt/scratch/sc21s2j/dataset/
   swjtu:
     results_path: /scratch/users/sc21s2j/weighted_sampling/results/
     dataset_path: /scratch/users/sc21s2j/dataset/
@@ -38,5 +38,5 @@ datasets:
     client_epochs: 1000
     image_size: 32
     batchsize: 64
-    lr: 2.0e-4
+    lr: 1.0e-4
     T: 1000
