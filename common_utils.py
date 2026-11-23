@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 
 import numpy as np
@@ -6,18 +7,29 @@ from diffusers import UNet2DModel, DDPMScheduler
 
 from config import args
 
+class Logger(logging.Logger):
+    def __init__(self, name="ws"):
+        super().__init__(name, level=logging.INFO)
+        self.propagate = False
 
-def init_logger():
-    logger = logging.getLogger("ws")
-    handler = logging.StreamHandler(sys.stdout)
-    logger.setLevel(logging.INFO)
-    logger.propagate = False
-    handler.setFormatter(logging.Formatter("%(asctime)s - %(message)s"))
-    logger.addHandler(handler)
-    return logger
+        self.formatter = logging.Formatter("%(asctime)s - %(message)s")
 
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(self.formatter)
+        self.addHandler(handler)
 
-logger = init_logger()
+    def add_log_path(self, log_path, file_name="train.log"):
+        os.makedirs(log_path, exist_ok=True)
+
+        handler = logging.FileHandler(
+            f"{log_path}/{file_name}", mode="a", encoding="utf-8"
+        )
+        handler.setLevel(logging.INFO)
+        handler.setFormatter(self.formatter)
+
+        self.addHandler(handler)
+
+logger = Logger()
 
 
 def get_diff_model():

@@ -5,15 +5,18 @@ conda activate ttt
 export PYTHONHASHSEED=0
 export PYTHONPATH="$PWD"
 
-num_clients=5
-num_workers=2
-server=mine
+num_clients=${1:-5}
+num_workers=${2:-2}
+server=${3:-mine}
+scripts=("${@:4}")
 
-# Select scripts to run
-scripts=(
-    "os"
-    # "cl"
-)
+if (( ${#scripts[@]} == 0 )); then
+    scripts=(
+#        "os"
+        "cl"
+    )
+
+fi
 
 # Shared task scheduler
 run_task() {

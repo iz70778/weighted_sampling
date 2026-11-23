@@ -4,10 +4,9 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 from diffusers import EMAModel
-from torch.optim.swa_utils import AveragedModel
 
-from config import args
 from common_utils import logger, get_diff_model, get_train_scheduler
+from config import args
 
 
 def train_diff_model(train_dataloader, model_name):
@@ -37,6 +36,7 @@ def train_diff_model(train_dataloader, model_name):
 
     # load checkpoints
     check_path = f"{args.check_path}/{model_name}"
+    logger.add_log_path(check_path)
     os.makedirs(check_path, exist_ok=True)
     checkpoints = list(Path(check_path).glob("*.pth"))
     if len(checkpoints) > 0:

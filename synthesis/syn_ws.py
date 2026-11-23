@@ -22,9 +22,19 @@ if __name__ == "__main__":
     for client in clients:
         os.makedirs(f"{img_path}/{client}", exist_ok=True)
 
-        model.load_state_dict(
-            torch.load(f"{args.model_path}/client{client}_os.pth", )
+        # model.load_state_dict(
+        #     torch.load(f"{args.model_path}/client{client}_os.pth", )
+        # )
+
+        checkpoint = torch.load(
+            f"{args.model_path}/client{client}_os.pth",
+            map_location=args.device,
+            weights_only=True,
         )
+        model.load_state_dict(checkpoint["model"])
+        ema_model = EMAModel(model.parameters())
+        ema_model.load_state_dict(checkpoint["ema"])
+        ema_model.copy_to(model.parameters())
 
         num_samplings = int(weights[client] * args.num_samplings)
         logger.info(f"Generating {num_samplings} images for client {client}...")
