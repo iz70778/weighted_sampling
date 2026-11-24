@@ -1,3 +1,4 @@
+import json
 import math
 import os
 from decimal import getcontext, Decimal
@@ -7,7 +8,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 
 from config import args
-from data.fetch import fetch_dataset_cifar10
+from data.fetch import fetch_dataset_cifar10, fetch_syn_dataset
 
 
 class PrunableDataset(Dataset):
@@ -57,6 +58,80 @@ class PrunableDataset(Dataset):
     def recover_to_origin(self):
         self.active_global_indices = list(self.original_global_indices)
 
+def load_or_create_partition(data, mode, partition_fn):
+    if mode == "iid":
+        file_name = f"{args.dataset}_iid_{args.num_clients}.json"
+    elif mode == "niid":
+        file_name = (
+            f"{args.dataset}_niid_"
+            f"{args.dirichlet_alpha}_{args.num_clients}.json"
+        )
+    else:
+        raise ValueError(f"Unknown partition mode: {mode}")
+
+    file_path = os.path.join(args.results_path, file_name)
+
+    os.makedirs(args.results_path, exist_ok=True)
+
+    with FileLock(f"{file_path}.lock"):
+        # Load existing partition
+        if os.path.exists(file_path):
+            with open(file_path, "r") as f:
+                clients_indices = json.load(f)
+
+            print(f"Partition loaded: {file_path}")
+
+            return clients_indices
+
+        # Create new partition
+        clients_indices = partition_fn(data)
+
+        clients_indices = [
+            [int(idx) for idx in indices]
+            for indices in clients_indices
+        ]
+
+        # Save partition
+        with open(f"{file_path}.tmp", "w") as f:
+            json.dump(clients_indices, f)
+
+        os.replace(f"{file_path}.tmp", file_path)
+
+        print(f"Partition saved: {file_path}")
+
+        return clients_indices
+
+
+def check_partition(clients_indices):
+    file_path = (f"{args.results_path}/"
+                 f"{args.dataset}_{args.dirichlet_alpha}_{args.num_clients}.json")
+
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+    clients_indices = [
+        [int(idx) for idx in indices]
+        for indices in clients_indices
+    ]
+
+    if not os.path.exists(file_path):
+        # First run: save partition
+        with open(file_path, "w") as f:
+            json.dump(clients_indices, f)
+
+        print(f"Partition saved: {file_path}")
+
+    else:
+        # Subsequent runs: verify partition
+        with open(file_path, "r") as f:
+            saved_indices = json.load(f)
+
+        if saved_indices != clients_indices:
+            raise ValueError(
+                f"Dataset partition mismatch: {file_path}"
+            )
+
+        print("Dataset partition verified.")
+
 
 def iid_partition_loader(data):
     """
@@ -76,6 +151,8 @@ def iid_partition_loader(data):
     clients_indices = [split.tolist() for split in splits]
 
     clients_data = [PrunableDataset(data, indices) for indices in clients_indices]
+
+    check_partition(clients_indices)
 
     client_loaders = [
         DataLoader(x, batch_size=args.batchsize, shuffle=True)
@@ -127,6 +204,8 @@ def niid_partition_loader_dirichlet(data):
 
         class_indices[cls] = indices[current_idx:]  # 仅保留未分配的索引
 
+    check_partition(clients_indices)
+
     client_loaders = []
 
     for i, client in enumerate(range(args.num_clients)):
@@ -160,12 +239,13 @@ def niid_partition_loader_dirichlet(data):
 def get_test_dataloder():
     if args.dataset == "cifar10":
         train_data, test_data = fetch_dataset_cifar10(args)
-        test_loader = DataLoader(
-            PrunableDataset(test_data, range(len(test_data))),
-            batch_size=args.test_batchsize,
-        )
     else:
         raise NotImplementedError
+
+    test_loader = DataLoader(
+        PrunableDataset(test_data, range(len(test_data))),
+        batch_size=args.test_batchsize,
+    )
 
     return test_loader
 
@@ -173,12 +253,13 @@ def get_test_dataloder():
 def get_cl_train_dataloader():
     if args.dataset == "cifar10":
         train_data, test_data = fetch_dataset_cifar10(args)
-        train_loader = DataLoader(
-            PrunableDataset(test_data, range(len(test_data))),
-            batch_size=args.batchsize,
-        )
     else:
         raise NotImplementedError
+
+    train_loader = DataLoader(
+        PrunableDataset(train_data, range(len(train_data))),
+        batch_size=args.batchsize,
+    )
 
     return train_loader
 
@@ -193,3 +274,12 @@ def get_fl_train_dataloader():
         return iid_partition_loader(train_data)
     else:
         return niid_partition_loader_dirichlet(train_data)
+
+
+def get_syn_train_dataloader():
+    train_data = fetch_syn_dataset(f"{args.img_path}")
+    train_loader = DataLoader(
+        PrunableDataset(train_data, range(len(train_data))),
+        batch_size=args.batchsize,
+    )
+    return train_loader

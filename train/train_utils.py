@@ -2,10 +2,10 @@ import os
 from pathlib import Path
 
 import torch
-import torch.nn.functional as F
 from diffusers import EMAModel
+from torch.nn import functional as F
 
-from common_utils import logger, get_diff_model, get_train_scheduler
+from common_utils import get_diff_model, get_train_scheduler, logger
 from config import args
 
 
@@ -47,12 +47,15 @@ def train_diff_model(train_dataloader, model_name):
 
         checkpoint = torch.load(latest_ckpt, map_location=args.device, weights_only=True)
 
+        start_epoch = checkpoint["epoch"]
+        if start_epoch == args.client_epochs:
+            logger.info(f"Model {model_name} has completed training")
+            return
+
         model.load_state_dict(checkpoint["model"])
         ema_model.load_state_dict(checkpoint["ema"])
         optimizer.load_state_dict(checkpoint["optimizer"])
-        start_epoch = checkpoint["epoch"]
         update_step = checkpoint["update_step"]
-
         logger.info(f"Model {model_name} start training from epoch {start_epoch}")
     else:
         logger.info(f"Model {model_name} start training from scratch")
@@ -112,5 +115,3 @@ def train_diff_model(train_dataloader, model_name):
                 model.state_dict(),
                 f"{args.model_path}/{model_name}.pth",
             )
-    del model
-    del optimizer

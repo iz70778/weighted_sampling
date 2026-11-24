@@ -1,6 +1,5 @@
 import io
 import os
-from copy import deepcopy
 from dataclasses import dataclass
 
 import numpy as np
@@ -8,8 +7,9 @@ import torch
 from torchvision.utils import save_image
 from tqdm import tqdm
 
+from common_utils import get_train_scheduler
 from config import args
-from common_utils import get_diff_model, get_train_scheduler
+from synthesis.syn_utils import load_trained_model, sample_data
 
 
 @dataclass
@@ -35,7 +35,7 @@ def parameters_to_ndarrays(parameters):
 
 
 def get_step_size(alpha_bar_t, rho, p):
-    assert (p >= 1.0) and (rho <= 0.5)
+    # assert (p >= 1.0) and (rho <= 0.5)
     return rho * (1 - alpha_bar_t) ** p  # / (3 * 2**p)
 
 
@@ -50,9 +50,8 @@ def ula_step(x, neg_gradlogp, eta):
     return x
 
 
-def aggregate_fit(x, t, noises):
+def aggregate_fit(x, t, noises, train_scheduler):
     # Retrieve hyperparmeters
-    train_scheduler = get_train_scheduler()
     alpha_bar_t = train_scheduler.alphas_cumprod[t].item()
     rho = 0.1
     ord = 1.0
@@ -76,26 +75,18 @@ def aggregate_fit(x, t, noises):
 
 
 if __name__ == "__main__":
-    os.makedirs(args.img_path, exist_ok=True)
+    img_path = f"{args.img_path}/dfd"
+    os.makedirs(img_path, exist_ok=True)
 
     client_models = []
 
-    global_model = get_diff_model()
-
-    for client in range(args.num_clients):
-        model = deepcopy(global_model)
-        model.load_state_dict(
-            torch.load(
-                f"{args.model_path}/client{client}_os.pth",
-                map_location="cpu"
-            )
-        )
-        model.to(args.device)
-        model.eval()
-        client_models.append(model)
-
     train_scheduler = get_train_scheduler()
     train_scheduler.set_timesteps(args.T)
+
+    for client in range(args.num_clients):
+        model = load_trained_model(f"client{client}_os")
+        model.eval()
+        client_models.append(model)
 
     with torch.no_grad():
         for start in tqdm(range(0, args.num_samplings, args.test_batchsize), desc="Generating"):
@@ -111,7 +102,7 @@ if __name__ == "__main__":
                     noise_pred = model(x, t).sample
                     noises.append(noise_pred)
 
-                x = aggregate_fit(x, t, noises)
+                x = aggregate_fit(x, t, noises, train_scheduler)
 
             x = (x.clamp(-1, 1) + 1) / 2
 

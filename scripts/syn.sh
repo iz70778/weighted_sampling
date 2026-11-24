@@ -9,6 +9,7 @@ test_batchsize=256
 num_samplings=5000
 server=mine
 
+
 # Select scripts to run
 scripts=(
     "ws"

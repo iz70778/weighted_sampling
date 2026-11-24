@@ -15,8 +15,9 @@ def parse_args():
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--server", choices=config["servers"])
-
+    parser.add_argument("--results_path", type=str)
+    parser.add_argument("--dataset_path", type=str)
+    parser.add_argument("--method", type=str)
     parser.add_argument("--seed", type=int)
     parser.add_argument("--dataset", type=str)
     parser.add_argument("--record_data", type=bool)
@@ -24,7 +25,6 @@ def parse_args():
     parser.add_argument("--test_batchsize", type=int)
     parser.add_argument("--num_clients", type=int)
     parser.add_argument("--dirichlet_alpha", type=float)
-    parser.add_argument("--client_id", type=int)
     parser.add_argument("--num_samplings", type=int)
     parser.add_argument("--suffix_path", type=str)
     parser.add_argument("--ddim", type=bool)
@@ -34,7 +34,6 @@ def parse_args():
     args = parser.parse_args([] if "ipykernel" in sys.modules else None)
 
     vars(args).update(config["training"])
-    vars(args).update(config["servers"][args.server])
     vars(args).update(config["datasets"][args.dataset])
 
     """

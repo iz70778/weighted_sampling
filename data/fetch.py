@@ -188,7 +188,6 @@ def fetch_dataset_cinic10(args):
     return train_data, test_data
 
 
-
 class SynthesisDataset(Dataset):
     def __init__(self, img_path, transform=None):
         self.img_paths = sorted(glob.glob(f"{img_path}/*/*.png"))
@@ -215,4 +214,4 @@ def fetch_syn_dataset(img_path):
         img_path=img_path,
         transform=transform
     )
-    return dataset, None
+    return dataset

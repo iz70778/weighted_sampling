@@ -1,10 +1,12 @@
+import os
+
 import torch
-from diffusers import DDIMScheduler
+from diffusers import DDIMScheduler, EMAModel
 from torchvision.utils import save_image
 from tqdm import tqdm
 
 from config import args
-from common_utils import get_train_scheduler
+from common_utils import get_train_scheduler, get_diff_model, logger
 
 
 def ddpm_sample(model, img_path, num_samplings=args.num_samplings, show_tqdm=False):
@@ -66,15 +68,28 @@ def ddim_sample(
             for j, img in enumerate(x):
                 save_image(img, f"{img_path}/{i + j:05d}.png")
 
+def sample_data(model, img_path, num_samplings, method):
+    logger.info(f"Generating {num_samplings} images for {method}...")
+    os.makedirs(img_path, exist_ok=True)
+    if args.ddim:
+        ddim_sample(model, img_path, num_samplings)
+    else:
+        ddpm_sample(model, img_path, num_samplings)
 
-# mean = torch.tensor(
-#     [0.4914, 0.4822, 0.4465],
-#     device=x.device
-# ).view(1, 3, 1, 1)
-#
-# std = torch.tensor(
-#     [0.2023, 0.1994, 0.2010],
-#     device=x.device
-# ).view(1, 3, 1, 1)
-#
-# x = (x * std + mean).clamp(0, 1)
+
+def load_trained_model(model_name):
+    model = get_diff_model()
+    checkpoint = torch.load(
+        f"{args.model_path}/{model_name}.pth",
+        map_location=args.device,
+        weights_only=True,
+    )
+
+    if "ema" in checkpoint:
+        model.load_state_dict(checkpoint["model"])
+        ema_model = EMAModel(model.parameters())
+        ema_model.load_state_dict(checkpoint["ema"])
+        ema_model.copy_to(model.parameters())
+    else:
+        model.load_state_dict(checkpoint)
+    return model
