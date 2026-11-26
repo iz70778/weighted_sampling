@@ -61,46 +61,6 @@ def get_optimizer(model):
     return optimizer
 
 
-def train_epoch(model, optimizer, train_loader,
-                train_scheduler, update_step):
-    model.train()
-    total_loss = 0.0
-    warmup_steps = get_warmup_steps(train_loader)
-
-    for x0, _, _, _ in train_loader:
-        x0 = x0.to(args.device)
-        B = x0.shape[0]
-
-        t = torch.randint(
-            0, args.T, (B,), device=args.device
-        ).long()
-
-        noise = torch.randn_like(x0)
-        xt = train_scheduler.add_noise(x0, noise, t)
-
-        noise_pred = model(xt, t).sample
-        loss = F.mse_loss(noise_pred, noise)
-
-        # Learning rate warmup
-        update_step += 1
-        lr = args.lr * min(update_step / warmup_steps, 1.0)
-
-        for group in optimizer.param_groups:
-            group["lr"] = lr
-
-        # Backpropagation
-        optimizer.zero_grad()
-        loss.backward()
-
-        torch.nn.utils.clip_grad_norm_(
-            model.parameters(), max_norm=1.0
-        )
-
-        optimizer.step()
-
-        total_loss += loss.item()
-
-    return total_loss / len(train_loader), update_step
 
 
 def weight_aggregate(global_state, local_state, weight):
