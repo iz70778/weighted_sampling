@@ -13,7 +13,7 @@ if __name__ == '__main__':
     method = "pfdm"
 
     args.client_epochs = int(args.client_epochs * 0.3)
-    args.batch_size = args.cl_batch_size
+    args.batchsize = args.cl_batchsize
 
     model = get_diff_model()
 
