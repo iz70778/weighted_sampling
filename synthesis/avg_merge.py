@@ -3,7 +3,8 @@ import os
 import torch
 
 from config import args
-from common_utils import get_diff_model, get_weights, weight_aggregate
+from common_utils import get_diff_model, get_weights
+from train.train_utils import weight_aggregate
 from data.data_loder import get_fl_train_dataloader
 from synthesis.syn_utils import ddpm_sample, ddim_sample
 

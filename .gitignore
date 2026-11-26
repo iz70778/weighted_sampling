@@ -21,8 +21,8 @@ venv/
 
 # results
 results/
-outputs/
-models/
+!results/**/indices.json
+!results/**/dis.txt
 *.pt
 
 # leeds server scripts

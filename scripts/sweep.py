@@ -8,7 +8,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 
 
-def run_task(script, server, params={}):
+def run_task(script, server, params=None):
     bash = r"D:\Git\bin\bash.exe" if os.name == "nt" else "bash"
 
     cmd = [
@@ -17,8 +17,9 @@ def run_task(script, server, params={}):
         "--server", server,
     ]
 
-    for key, value in params.items():
-        cmd.extend([f"--{key}", str(value)])
+    if params:
+        for key, value in params.items():
+            cmd.extend([f"--{key}", str(value)])
 
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
@@ -41,7 +42,7 @@ def run_task(script, server, params={}):
         return process.wait()
 
 
-def run_sweep(grid, server, script, max_jobs):
+def run_sweep(script, server, max_jobs,grid):
     # Cartesian product
     combinations = [
         dict(zip(grid.keys(), values))

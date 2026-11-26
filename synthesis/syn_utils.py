@@ -8,6 +8,9 @@ from tqdm import tqdm
 from config import args
 from common_utils import get_train_scheduler, get_diff_model, logger
 
+from cleanfid import fid
+from cleanfid.inception_torchscript import InceptionV3W
+
 
 def ddpm_sample(model, img_path, num_samplings=args.num_samplings, show_tqdm=False):
     train_scheduler = get_train_scheduler()
@@ -55,9 +58,7 @@ def ddim_sample(
         ):
             n = min(args.test_batchsize, num_samplings - i)
 
-            x = torch.randn(
-                n, 3, args.image_size, args.image_size, device=args.device
-            )
+            x = torch.randn(n, 3, args.image_size, args.image_size, device=args.device)
 
             for t in sample_scheduler.timesteps:
                 noise_pred = model(x, t).sample
@@ -67,6 +68,7 @@ def ddim_sample(
 
             for j, img in enumerate(x):
                 save_image(img, f"{img_path}/{i + j:05d}.png")
+
 
 def sample_data(model, img_path, num_samplings, method):
     logger.info(f"Generating {num_samplings} images for {method}...")
@@ -92,4 +94,16 @@ def load_trained_model(model_name):
         ema_model.copy_to(model.parameters())
     else:
         model.load_state_dict(checkpoint)
+
     return model
+
+
+def compute_clean_fid(img_path):
+    score = fid.compute_fid(
+        img_path,
+        dataset_name=args.dataset,
+        dataset_res=args.image_size,
+        dataset_split="train",
+        num_workers=0,
+    )
+    return score

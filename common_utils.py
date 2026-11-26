@@ -79,17 +79,3 @@ def get_weights(selected_clients, client_loaders):
     return temp / temp.sum()
 
 
-def weight_aggregate(global_state, local_state, weight):
-    if global_state is None:
-        global_state = {k: local_state[k] * weight for k in local_state}
-    else:
-        for k in global_state:
-            global_state[k] += local_state[k] * weight
-    return global_state
-
-
-def weights_aggregate(client_states, clients, weights):
-    global_state = None
-    for i, client in enumerate(clients):
-        global_state = weight_aggregate(global_state, client_states[client], weights[i])
-    return global_state

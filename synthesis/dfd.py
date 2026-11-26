@@ -51,28 +51,50 @@ def ula_step(x, neg_gradlogp, eta):
 
 
 def aggregate_fit(x, t, noises, train_scheduler):
-    # Retrieve hyperparmeters
     alpha_bar_t = train_scheduler.alphas_cumprod[t].item()
+
     rho = 0.1
     ord = 1.0
     # rho = 1
     # ord = 2
     eta_t = get_step_size(alpha_bar_t, rho, ord)
-
-    # Aggregate
+    # mixed samplings
     epsilons = torch.stack(noises, dim=0)
-
-    mix_grads = epsilons * 2 / (1 - alpha_bar_t) ** 0.5
+    mix_grads = epsilons * 1 / (1 - alpha_bar_t) ** 0.5
     mix_energies = epsilons.norm(p=2, dim=(2, 3, 4)).pow(2)
-
     logits = -mix_energies
     mix_coefs = logits.softmax(dim=0)
     mixture_scores = get_mixture_scores(mix_coefs, mix_grads)
-
     x = ula_step(x, mixture_scores, eta_t)
 
     return x
 
+
+def aggregate_fit_sde(x, t, noises, train_scheduler):
+    alpha_bar_t = train_scheduler.alphas_cumprod[t].item()
+    alpha_t = train_scheduler.alphas[t].item()
+
+    # Standard DDPM score
+    epsilon = noises[0]
+    score = -epsilon / (1 - alpha_bar_t)**0.5
+
+    # Gaussian noise
+    noise = torch.randn_like(x)
+
+    # Adaptive step size
+    snr = 0.27
+
+    grad_norm = score.flatten(1).norm(dim=1).mean()
+    noise_norm = noise.flatten(1).norm(dim=1).mean()
+
+    eta_t = 2 * alpha_t * (
+        snr * noise_norm / grad_norm.clamp_min(1e-8)
+    )**2
+
+    # Langevin update
+    x = x + eta_t * score + (2 * eta_t)**0.5 * noise
+
+    return x
 
 if __name__ == "__main__":
     img_path = f"{args.img_path}/dfd"
@@ -83,7 +105,9 @@ if __name__ == "__main__":
     train_scheduler = get_train_scheduler()
     train_scheduler.set_timesteps(args.T)
 
-    for client in range(args.num_clients):
+    num_clients = args.num_clients
+    num_clients = 1
+    for client in range(num_clients):
         model = load_trained_model(f"client{client}_os")
         model.eval()
         client_models.append(model)
@@ -107,4 +131,4 @@ if __name__ == "__main__":
             x = (x.clamp(-1, 1) + 1) / 2
 
             for j, img in enumerate(x):
-                save_image(img, f"{args.img_path}/{start + j:05d}.png")
+                save_image(img, f"{img_path}/{start + j:05d}.png")

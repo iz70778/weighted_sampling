@@ -12,7 +12,7 @@ run:
 
 
 training:
-  client_selected_ratio: 0.15
+  client_selected_ratio: 1.0
   rounds: 100
 
 

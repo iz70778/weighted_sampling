@@ -58,82 +58,40 @@ class PrunableDataset(Dataset):
     def recover_to_origin(self):
         self.active_global_indices = list(self.original_global_indices)
 
-def load_or_create_partition(data, mode, partition_fn):
-    if mode == "iid":
-        file_name = f"{args.dataset}_iid_{args.num_clients}.json"
-    elif mode == "niid":
-        file_name = (
-            f"{args.dataset}_niid_"
-            f"{args.dirichlet_alpha}_{args.num_clients}.json"
-        )
-    else:
-        raise ValueError(f"Unknown partition mode: {mode}")
 
-    file_path = os.path.join(args.results_path, file_name)
+def load_or_create_partition(data):
+    if args.dirichlet_alpha < 0:
+        partition_fn = iid_partition
+    else:
+        partition_fn = niid_partition
+
+    file_path = os.path.join(args.results_path, "indices.json")
 
     os.makedirs(args.results_path, exist_ok=True)
 
-    with FileLock(f"{file_path}.lock"):
+    if os.path.exists(file_path):
         # Load existing partition
-        if os.path.exists(file_path):
-            with open(file_path, "r") as f:
-                clients_indices = json.load(f)
+        with open(file_path, "r") as f:
+            clients_indices = json.load(f)
 
-            print(f"Partition loaded: {file_path}")
+        print(f"Partition loaded: {file_path}")
 
-            return clients_indices
-
+        return clients_indices
+    else:
         # Create new partition
         clients_indices = partition_fn(data)
 
-        clients_indices = [
-            [int(idx) for idx in indices]
-            for indices in clients_indices
-        ]
+        # clients_indices = [[int(idx) for idx in indices] for indices in clients_indices]
 
-        # Save partition
         with open(f"{file_path}.tmp", "w") as f:
             json.dump(clients_indices, f)
-
         os.replace(f"{file_path}.tmp", file_path)
-
         print(f"Partition saved: {file_path}")
 
         return clients_indices
 
 
-def check_partition(clients_indices):
-    file_path = (f"{args.results_path}/"
-                 f"{args.dataset}_{args.dirichlet_alpha}_{args.num_clients}.json")
-
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
-    clients_indices = [
-        [int(idx) for idx in indices]
-        for indices in clients_indices
-    ]
-
-    if not os.path.exists(file_path):
-        # First run: save partition
-        with open(file_path, "w") as f:
-            json.dump(clients_indices, f)
-
-        print(f"Partition saved: {file_path}")
-
-    else:
-        # Subsequent runs: verify partition
-        with open(file_path, "r") as f:
-            saved_indices = json.load(f)
-
-        if saved_indices != clients_indices:
-            raise ValueError(
-                f"Dataset partition mismatch: {file_path}"
-            )
-
-        print("Dataset partition verified.")
-
-
-def iid_partition_loader(data):
+def iid_partition(data):
     """
     partition the dataset into a dataloader for each client, iid style
     """
@@ -148,18 +106,8 @@ def iid_partition_loader(data):
     all_indices = torch.randperm(len(data))
     client_indices = all_indices[:client_num_total]
     splits = torch.split(client_indices, client_nums)
-    clients_indices = [split.tolist() for split in splits]
-
-    clients_data = [PrunableDataset(data, indices) for indices in clients_indices]
-
-    check_partition(clients_indices)
-
-    client_loaders = [
-        DataLoader(x, batch_size=args.batchsize, shuffle=True)
-        for x in clients_data
-    ]
-
-    return client_loaders
+    client_indices = [split.tolist() for split in splits]
+    return client_indices
 
 
 def get_primary_classes(client, args):
@@ -172,14 +120,12 @@ def get_primary_classes(client, args):
     return list(range(start, end))
 
 
-def niid_partition_loader_dirichlet(data):
+def niid_partition(data):
     class_indices = {i: [] for i in range(args.num_classes)}
     for idx, label in enumerate(data.targets):
         class_indices[int(label)].append(idx)
 
-    alpha = args.dirichlet_alpha
-
-    class_proportions = np.random.dirichlet([alpha] * args.num_clients, size=args.num_classes)
+    class_proportions = np.random.dirichlet([args.dirichlet_alpha] * args.num_clients, size=args.num_classes)
 
     clients_indices = [[] for _ in range(args.num_clients)]
 
@@ -204,36 +150,7 @@ def niid_partition_loader_dirichlet(data):
 
         class_indices[cls] = indices[current_idx:]  # 仅保留未分配的索引
 
-    check_partition(clients_indices)
-
-    client_loaders = []
-
-    for i, client in enumerate(range(args.num_clients)):
-        selected_indices = clients_indices[client]
-
-        if len(selected_indices) == 0:
-            selected_indices.append(np.random.choice(len(data), 1)[0])
-            print(f'client {client} does not have data, assigned 1 random sample.')
-
-        client_data = PrunableDataset(data, selected_indices)
-        client_loader = DataLoader(client_data, batch_size=args.batchsize, shuffle=True)
-        client_loaders.append(client_loader)
-
-        if args.record_data:
-            file_path = f'{args.results_path}/{args.dataset}_{args.dirichlet_alpha}_dis.txt'
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            with open(file_path, 'w' if client == 0 else 'a') as f:
-                labels = [data.targets[i] for i in selected_indices]
-                f.write(f"client:{client} alpha:{alpha}: \n")
-                labels_count = [labels.count(i) for i in range(args.num_classes)]
-                f.write(f"Total samples: {len(selected_indices)}\n")
-                f.write("Class distribution: ")
-                f.write(f"{labels_count}\n")
-
-    total = sum(len(loader.dataset) for loader in client_loaders)
-    args.ratios = [len(loader.dataset) / total for loader in client_loaders]
-
-    return client_loaders
+    return clients_indices
 
 
 def get_test_dataloder():
@@ -270,10 +187,29 @@ def get_fl_train_dataloader():
     else:
         raise NotImplementedError
 
-    if args.dirichlet_alpha < 0:
-        return iid_partition_loader(train_data)
-    else:
-        return niid_partition_loader_dirichlet(train_data)
+    clients_indices = load_or_create_partition(train_data)
+
+    client_loaders = []
+
+    for client, selected_indices in enumerate(clients_indices):
+        client_data = PrunableDataset(train_data, selected_indices)
+
+        client_loader = DataLoader(client_data, batch_size=args.batchsize, shuffle=True)
+
+        client_loaders.append(client_loader)
+
+        if args.record_data:
+            file_path = f'{args.results_path}/dis.txt'
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            with open(file_path, 'w' if client == 0 else 'a') as f:
+                labels = [train_data.targets[i] for i in selected_indices]
+                f.write(f"client:{client} alpha:{args.dirichlet_alpha}: \n")
+                labels_count = [labels.count(i) for i in range(args.num_classes)]
+                f.write(f"Total samples: {len(selected_indices)}\n")
+                f.write("Class distribution: ")
+                f.write(f"{labels_count}\n")
+
+    return client_loaders
 
 
 def get_syn_train_dataloader():
