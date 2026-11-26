@@ -213,7 +213,7 @@ def get_fl_train_dataloader():
 
 
 def get_syn_train_dataloader():
-    train_data = fetch_syn_dataset(f"{args.img_path}")
+    train_data = fetch_syn_dataset(f"{args.img_path}/ws")
     train_loader = DataLoader(
         PrunableDataset(train_data, range(len(train_data))),
         batch_size=args.batchsize,
