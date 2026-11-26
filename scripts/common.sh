@@ -45,24 +45,22 @@ setup_environment() {
         mine)
             results_path="F:/pycodes/weighted_sampling/results"
             dataset_path="F:/data"
-            local conda_env="ttt"
             ;;
         calder)
             module load calder/hopper miniforge3
             results_path="/scratch-calder/users/sc21s2j/weighted_sampling/results"
             dataset_path="/scratch-calder/users/sc21s2j/dataset"
-            local conda_env="ttt"
             ;;
         aire)
             module load miniforge
             results_path="/mnt/scratch/sc21s2j/weighted_sampling/results"
             dataset_path="/mnt/scratch/sc21s2j/dataset"
-            local conda_env="ttt"
             ;;
         swjtu_yll)
             results_path="/opt/data/private/ws/results"
             dataset_path="/opt/data/private"
-            local conda_env="ttt"
+            source /root/miniconda3/etc/profile.d/conda.sh
+            conda activate ttt
             ;;
         *)
             echo "Unknown server: $server" >&2
@@ -70,10 +68,6 @@ setup_environment() {
             ;;
     esac
 
-    if [[ "$server" != "mine" ]]; then
-        source "$(conda info --base)/etc/profile.d/conda.sh"
-        conda activate "$conda_env"
-    fi
 
     cd "$PROJECT_ROOT"
 
