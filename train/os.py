@@ -11,6 +11,7 @@ if __name__ == '__main__':
     method = args.method
     if method == "cl":
         train_loader = get_cl_train_dataloader()
+        args.batch_size =
     elif method == "cl_distill":
         train_loader = get_syn_train_dataloader()
     elif method.endswith("_os"):

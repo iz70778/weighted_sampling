@@ -22,5 +22,7 @@ datasets:
     client_epochs: 1000
     image_size: 32
     batchsize: 64
+    cl_batchsize: 128
     lr: 2.0e-4
     T: 1000
+

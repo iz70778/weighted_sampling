@@ -153,7 +153,7 @@ if __name__ == "__main__":
             total_loss += loss.detach()
 
         logger.info(f"{method} - Epoch {epoch}: Loss = {total_loss.item() / steps:.6f}")
-        if epoch % 20 == 0 or epoch == args.client_epochs:
+        if epoch % 10 == 0 or epoch == args.client_epochs:
             dest = check_path / f"{method}_{epoch}.pth"
             tmp = dest.with_suffix(".tmp")
             torch.save({

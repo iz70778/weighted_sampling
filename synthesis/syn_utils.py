@@ -70,8 +70,7 @@ def ddim_sample(
                 save_image(img, f"{img_path}/{i + j:05d}.png")
 
 
-def sample_data(model, img_path, num_samplings, method):
-    logger.info(f"Generating {num_samplings} images for {method}...")
+def sample_data(model, img_path, num_samplings):
     os.makedirs(img_path, exist_ok=True)
     if args.ddim:
         ddim_sample(model, img_path, num_samplings)
