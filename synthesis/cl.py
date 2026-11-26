@@ -8,6 +8,5 @@ if __name__ == "__main__":
     img_path = f"{args.img_path}/{method}"
     os.makedirs(img_path, exist_ok=True)
     model = load_trained_model(method)
-    args.batch_size = args.cl_batch_size
     sample_data(model, f"{img_path}", args.num_samplings)
 

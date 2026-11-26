@@ -176,6 +176,7 @@ def get_cl_train_dataloader():
     train_loader = DataLoader(
         PrunableDataset(train_data, range(len(train_data))),
         batch_size=args.cl_batchsize,
+        shuffle=True
     )
 
     return train_loader
