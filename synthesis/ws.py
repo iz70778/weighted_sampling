@@ -3,7 +3,7 @@ import os
 from config import args
 from data.data_loder import get_fl_train_dataloader
 from synthesis.syn_utils import load_trained_model, sample_data
-from train.train_utils import get_weights
+from common_utils import get_weights
 
 if __name__ == "__main__":
     img_path = f"{args.img_path}/avg_sample"

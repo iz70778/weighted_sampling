@@ -59,6 +59,11 @@ setup_environment() {
             dataset_path="/mnt/scratch/sc21s2j/dataset"
             local conda_env="ttt"
             ;;
+        swjtu_yll)
+            results_path="/opt/data/private/ws/results"
+            dataset_path="/opt/data/private"
+            local conda_env="ttt"
+            ;;
         *)
             echo "Unknown server: $server" >&2
             return 2

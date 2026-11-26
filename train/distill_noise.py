@@ -1,4 +1,3 @@
-import random
 from pathlib import Path
 
 import torch
@@ -72,7 +71,8 @@ if __name__ == "__main__":
 
     student = get_diff_model().to(device)
     if checkpoint is None and is_init_client:
-        init_client = random.choice(clients)
+        # init_client = random.choice(clients)
+        init_client = 0
         student.load_state_dict(teachers[init_client].state_dict())
         logger.info(f"Initializing student from client {init_client}")
     optimizer = get_optimizer(student)
@@ -153,7 +153,7 @@ if __name__ == "__main__":
             total_loss += loss.detach()
 
         logger.info(f"{method} - Epoch {epoch}: Loss = {total_loss.item() / steps:.6f}")
-        if epoch % 100 == 0 or epoch == args.client_epochs:
+        if epoch % 20 == 0 or epoch == args.client_epochs:
             dest = check_path / f"{method}_{epoch}.pth"
             tmp = dest.with_suffix(".tmp")
             torch.save({
