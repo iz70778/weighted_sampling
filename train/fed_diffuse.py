@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
     train_scheduler = get_train_scheduler()
 
-    check_path = args.check_path / "fed_diffuse"
+    check_path = args.check_path / args.method
     check_path.mkdir(parents=True, exist_ok=True)
     logger.add_log_path(check_path)
 
@@ -66,9 +66,7 @@ if __name__ == '__main__':
             del local_model
             del optimizer
 
-        torch.save({
-            "round": cur_round,
-            "model": global_state,
-        }, check_path / f"fed_diffuse{cur_round}.pth")
-
+        torch.save(global_state, check_path / f"{args.method}_{cur_round}.pth")
         global_model.load_state_dict(global_state)
+
+    torch.save(global_model.state_dict(), args.model_path / f"{args.method}.pth")

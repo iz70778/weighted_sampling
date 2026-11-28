@@ -25,6 +25,7 @@ datasets:
     client_epochs: 500
     rounds: 100
     image_size: 32
+    image_channel: 3
     batchsize: 64
     cl_batchsize: 128
     lr: 2.0e-4
@@ -34,6 +35,7 @@ datasets:
     client_epochs: 100
     rounds: 100
     image_size: 64
+    image_channel: 1
     batchsize: 64
     cl_batchsize: 128
     lr: 2.0e-4
@@ -43,6 +45,7 @@ datasets:
     client_epochs: 1000
     rounds: 100
     image_size: 64
+    image_channel: 3
     batchsize: 64
     cl_batchsize: 128
     lr: 1.0e-4
@@ -52,6 +55,7 @@ datasets:
     client_epochs: 500
     rounds: 100
     image_size: 64
+    image_channel: 3
     batchsize: 64
     cl_batchsize: 128
     lr: 2.0e-4

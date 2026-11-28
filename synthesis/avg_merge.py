@@ -9,7 +9,7 @@ from data.data_loder import get_fl_train_dataloader
 from synthesis.syn_utils import ddpm_sample, ddim_sample
 
 if __name__ == "__main__":
-    img_path = args.img_path / "avg_merge"
+    img_path = args.img_path / args.method
     img_path.mkdir(parents=True, exist_ok=True)
 
     model = get_diff_model()
@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     global_state = None
     for i, client in enumerate(clients):
-        client_state = torch.load(args.model_path / f"client{client}.pth", )
+        client_state = torch.load(args.model_path / f"client{client}_os.pth", )
         global_state = weight_aggregate(global_state, client_state, weights[i])
 
     model.load_state_dict(global_state)

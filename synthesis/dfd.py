@@ -98,7 +98,7 @@ def aggregate_fit_sde(x, t, noises, train_scheduler):
 
 
 if __name__ == "__main__":
-    img_path = args.img_path / "dfd"
+    img_path = args.img_path / args.method
     os.makedirs(img_path, exist_ok=True)
 
     client_models = []

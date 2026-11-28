@@ -114,4 +114,9 @@ if __name__ == '__main__':
                 "update_step": update_step,
             }, f"{check_path}/{method}_{epoch}.pth")
 
-    save_ema_model(model, ema_model, method)
+    ema_model.copy_to(model.parameters())
+    torch.save(
+        model.state_dict(),
+        args.model_path / f"{method}.pth",
+    )
+

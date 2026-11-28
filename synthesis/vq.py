@@ -27,7 +27,7 @@ def ddpm_sample(model, img_path, num_samplings=args.num_samplings, code_book=Non
             code_ids = torch.multinomial(counts, n, replacement=True)
             condition = centers[code_ids].reshape(n, 2, 32, 32)
 
-            x = torch.randn(n, 3, args.image_size, args.image_size, device=args.device)
+            x = torch.randn(n, args.image_channel, args.image_size, args.image_size, device=args.device)
 
             for t in train_scheduler.timesteps:
                 model_input = x if condition is None else torch.cat((x, condition), dim=1)
@@ -67,7 +67,7 @@ def ddim_sample(
             code_ids = torch.multinomial(counts, n, replacement=True)
             condition = centers[code_ids].reshape(n, 2, 32, 32)
 
-            x = torch.randn(n, 3, args.image_size, args.image_size, device=args.device)
+            x = torch.randn(n, args.image_channel, args.image_size, args.image_size, device=args.device)
 
             for t in sample_scheduler.timesteps:
                 model_input = x if condition is None else torch.cat((x, condition), dim=1)
@@ -89,9 +89,8 @@ def sample_data(model, img_path, num_samplings, codebook):
 
 
 if __name__ == "__main__":
-    method = "vq"
 
-    img_path = args.img_path / method
+    img_path = args.img_path / args.method
     os.makedirs(img_path, exist_ok=True)
 
     clients = list(range(args.num_clients))

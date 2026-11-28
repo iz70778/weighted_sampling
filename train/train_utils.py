@@ -23,6 +23,29 @@ def get_warmup_steps(train_loader):
     return warmup_steps
 
 
+def get_optimizer(model):
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    return optimizer
+
+
+def weight_aggregate(global_state, local_state, weight):
+    if global_state is None:
+        global_state = {k: local_state[k] * weight for k in local_state}
+    else:
+        for k in global_state:
+            global_state[k] += local_state[k] * weight
+    return global_state
+
+
+def save_ema_model(model, ema_model, method):
+    ema_model.copy_to(model.parameters())
+
+    torch.save(
+        model.state_dict(),
+        args.model_path / f"{method}.pth",
+    )
+
+
 def get_checkpoint(check_path):
     checkpoints = list(Path(check_path).glob("*.pth"))
 
@@ -41,26 +64,3 @@ def get_checkpoint(check_path):
     )
 
     return checkpoint
-
-
-def save_ema_model(model, ema_model, method):
-    ema_model.copy_to(model.parameters())
-
-    torch.save(
-        model.state_dict(),
-        args.model_path / f"{method}.pth",
-    )
-
-
-def get_optimizer(model):
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
-    return optimizer
-
-
-def weight_aggregate(global_state, local_state, weight):
-    if global_state is None:
-        global_state = {k: local_state[k] * weight for k in local_state}
-    else:
-        for k in global_state:
-            global_state[k] += local_state[k] * weight
-    return global_state

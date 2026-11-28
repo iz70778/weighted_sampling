@@ -163,4 +163,9 @@ if __name__ == "__main__":
                 "cuda_rng": torch.cuda.get_rng_state(device) if device.type == "cuda" else None,
             }, tmp)
             tmp.replace(dest)
-    save_ema_model(student, ema, method)
+
+    ema.copy_to(student.parameters())
+    torch.save(
+        student.state_dict(),
+        args.model_path / f"{method}.pth",
+    )

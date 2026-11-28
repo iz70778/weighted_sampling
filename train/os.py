@@ -41,12 +41,8 @@ if __name__ == '__main__':
 
         start_epoch = checkpoint["epoch"]
         update_step = checkpoint["update_step"]
-
-        if start_epoch >= args.client_epochs:
-            logger.info(f"Method {method} has completed training")
-        else:
-            logger.info(f"Method {method} start training "
-                        f"from epoch {start_epoch}")
+        logger.info(f"Method {method} start training "
+                    f"from epoch {start_epoch}")
 
     model.train()
     for epoch in range(start_epoch + 1, args.client_epochs + 1):
@@ -80,4 +76,8 @@ if __name__ == '__main__':
                 "update_step": update_step,
             }, f"{check_path}/{method}_{epoch}.pth")
 
-    save_ema_model(model, ema_model, method)
+    ema_model.copy_to(model.parameters())
+    torch.save(
+        model.state_dict(),
+        args.model_path / f"{method}.pth",
+    )

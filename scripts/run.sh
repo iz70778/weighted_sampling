@@ -1,13 +1,5 @@
 #!/usr/bin/env bash
-set -eo pipefail
+set -e
 
-# Load common configuration
-source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/common.sh"
-
-parse_args "$@"
-setup_environment
-
-# Run one Python task
-exec python -u -m "$script" \
-    "${server_args[@]}" \
-    "${python_args[@]}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+exec python "$SCRIPT_DIR/run.py" "$@"

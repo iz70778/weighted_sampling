@@ -11,13 +11,12 @@ from data.data_loder import get_fl_train_dataloader
 from synthesis.syn_utils import load_trained_model, sample_data
 
 if __name__ == "__main__":
-    method = "pfdm"
-    img_path = args.img_path / method
+    img_path = args.img_path / args.method
     img_path.mkdir(parents=True, exist_ok=True)
 
     clients = list(range(args.num_clients))
 
-    global_model = load_trained_model(method).eval()
+    global_model = load_trained_model(args.method).eval()
 
     depth = 740 if args.dataset == "cifar10" else 850
 

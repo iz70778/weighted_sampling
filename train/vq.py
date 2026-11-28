@@ -9,15 +9,16 @@ from tqdm import tqdm
 
 from config import args
 from data.data_loder import get_fl_train_dataloader
-from common_utils import get_weights, logger, get_diff_model, get_train_scheduler
+from common_utils import get_weights, logger, get_diff_model, get_train_scheduler, mark_done
 from config import args
 from data.data_loder import get_fl_train_dataloader
 from train.train_utils import get_optimizer, weight_aggregate, get_warmup_steps, save_ema_model
 
 
 def prepare_codebooks():
-    save_path = args.check_path / "codebooks"
-    save_path.mkdir(parents=True, exist_ok=True)
+    check_path = args.check_path / args.method
+    check_path.mkdir(parents=True, exist_ok=True)
+    logger.add_log_path(check_path)
 
     weights = Inception_V3_Weights.IMAGENET1K_V1
     encoder = inception_v3(weights=weights)
@@ -49,7 +50,7 @@ def prepare_codebooks():
             torch.save({
                 "cen": torch.from_numpy(kmeans.cluster_centers_),
                 "idxs": dict(zip(idxs, kmeans.labels_.tolist())),
-            }, save_path / f"client{client}_codebook.pt")
+            }, check_path / f"client{client}_codebook.pt")
 
 
 def train_vq():
@@ -59,7 +60,7 @@ def train_vq():
     client_books = []
     for client in clients:
         book = torch.load(
-            args.check_path / "codebooks" / f"{client}.pt",
+            args.check_path / "codebooks" / f"client{client}_codebook.pt",
             map_location=args.device,
             weights_only=True,
         )
@@ -72,7 +73,7 @@ def train_vq():
 
     train_scheduler = get_train_scheduler()
 
-    check_path = args.check_path / "vq"
+    check_path = args.check_path / args.method
     check_path.mkdir(parents=True, exist_ok=True)
     logger.add_log_path(check_path)
 
@@ -131,17 +132,19 @@ def train_vq():
             del optimizer
 
         torch.save({
-            "round": cur_round,
-            "model": global_state,
-        }, check_path / f"vq_{cur_round}.pth")
-
+            "model_config": dict(global_model.config),
+            "model": global_model.state_dict(),
+        }, check_path / f"{args.method}_{cur_round}.pth")
         global_model.load_state_dict(global_state)
 
-    torch.save(global_model.state_dict(), check_path / f"vq.pth")
+    torch.save({
+        "model_config": dict(global_model.config),
+        "model": global_model.state_dict(),
+    }, args.model_path / f"{args.method}.pth")
 
 
 if __name__ == "__main__":
-    if args.method == "codebook":
+    if args.method == "codebooks":
         prepare_codebooks()
     else:
         train_vq()
