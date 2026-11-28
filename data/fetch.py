@@ -7,48 +7,30 @@ from torch.utils.data import Dataset
 from torchvision import transforms as transforms
 
 
-def fetch_dataset_mnist(args):
-    """ Collect MNIST """
-    transform = transforms.Compose([
+def fetch_dataset_fmnist(args):
+    transform_train = transforms.Compose([
+        transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
+        transforms.Normalize((0.5,), (0.5,)),
     ])
 
-    train_data = torchvision.datasets.MNIST(
-        args.dataset_path + r'/mnist',
-        train=True,
-        download=True,
-        transform=transform,
-    )
-
-    test_data = torchvision.datasets.MNIST(
-        args.dataset_path + r'/mnist',
-        train=False,
-        download=True,
-        transform=transform
-    )
-
-    return train_data, test_data
-
-
-def fetch_dataset_fmnist(args):
-    transform = transforms.Compose([
+    transform_test = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize((0.2860,), (0.3530,))
+        transforms.Normalize((0.5,), (0.5,)),
     ])
 
     train_data = torchvision.datasets.FashionMNIST(
         args.dataset_path + r'/fmnist',
         train=True,
         download=True,
-        transform=transform,
+        transform=transform_train,
     )
 
     test_data = torchvision.datasets.FashionMNIST(
         args.dataset_path + r'/fmnist',
         train=False,
         download=True,
-        transform=transform
+        transform=transform_test
     )
 
     return train_data, test_data
@@ -83,107 +65,82 @@ def fetch_dataset_cifar10(args):
     return train_data, test_data
 
 
-def fetch_dataset_cifar100(args):
-    transform_train = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
-        transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.05),
-        transforms.ToTensor(),
-        transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)),
-    ])
-
-    transform_test = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)),
-    ])
-
-    train_data = torchvision.datasets.CIFAR100(
-        args.dataset_path + r'/cifar100',
-        train=True,
-        download=True,
-        transform=transform_train
-    )
-
-    test_data = torchvision.datasets.CIFAR100(
-        args.dataset_path + r'/cifar100',
-        train=False,
-        download=True,
-        transform=transform_test
-    )
-
-    return train_data, test_data
-
-
 def fetch_dataset_tiny_imagenet(args):
-    data_dir = args.dataset_path + r'/tiny_imagenet'
-
-    IMAGE_SIZE = 64
-
-    mean = [0.485, 0.456, 0.406]
-    std = [0.229, 0.224, 0.225]
+    data_dir = args.dataset_path / "tiny_imagenet"
 
     transform_train = transforms.Compose([
-        transforms.RandomCrop(IMAGE_SIZE, padding=4),
         transforms.RandomHorizontalFlip(),
-        transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.05),
         transforms.ToTensor(),
-        transforms.Normalize(mean, std),
+        transforms.Normalize((0.5,) * 3, (0.5,) * 3),
     ])
 
     transform_val = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean, std),
+        transforms.Normalize((0.5,) * 3, (0.5,) * 3),
     ])
 
-    train_dir = os.path.join(data_dir, 'train')
-
-    val_dir = os.path.join(data_dir, 'val')
-
     train_data = torchvision.datasets.ImageFolder(
-        train_dir,
-        transform=transform_train
+        data_dir / "train",
+        transform=transform_train,
     )
 
-    test_data = torchvision.datasets.ImageFolder(
-        val_dir,
-        transform=transform_val
+    val_data = torchvision.datasets.ImageFolder(
+        data_dir / "val",
+        transform=transform_val,
     )
 
-    return train_data, test_data
+    return train_data, val_data
 
 
-def fetch_dataset_cinic10(args):
-    data_dir = args.dataset_path + r'/cinic10'
-
-    mean = [0.47889522, 0.47227842, 0.43047404]
-    std = [0.24205776, 0.23828046, 0.25874835]
+def fetch_dataset_celeba(args):
+    image_size = 64
+    preprocess = [
+        transforms.CenterCrop(178),
+        transforms.Resize(
+            (image_size, image_size),
+            interpolation=transforms.InterpolationMode.BILINEAR,
+        ),
+    ]
 
     transform_train = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
+        *preprocess,
         transforms.RandomHorizontalFlip(),
-        transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.05),
         transforms.ToTensor(),
-        transforms.Normalize(mean, std),
+        transforms.Normalize((0.5,) * 3, (0.5,) * 3),
     ])
 
     transform_test = transforms.Compose([
+        *preprocess,
         transforms.ToTensor(),
-        transforms.Normalize(mean, std),
+        transforms.Normalize((0.5,) * 3, (0.5,) * 3),
     ])
 
-    train_dir = os.path.join(data_dir, 'train')
-    valid_dir = os.path.join(data_dir, 'valid')
-    test_dir = os.path.join(data_dir, 'test')
-
-    train_data = torchvision.datasets.ImageFolder(
-        train_dir,
-        transform=transform_train
+    train_data = torchvision.datasets.CelebA(
+        root=args.dataset_path,
+        split="train",
+        target_type="attr",
+        transform=transform_train,
+        download=True,
     )
 
-    test_data = torchvision.datasets.ImageFolder(
-        test_dir,
-        transform=transform_test
+    test_data = torchvision.datasets.CelebA(
+        root=args.dataset_path,
+        split="test",
+        target_type="attr",
+        transform=transform_test,
+        download=True,
     )
+
+    for dataset in (train_data, test_data):
+        columns = [
+            dataset.attr_names.index(name)
+            for name in ["Male", "Smiling", "Oval_Face", "Black_Hair"]
+        ]
+        male, smiling, oval_face, black_hair = dataset.attr[:, columns].T
+        dataset.targets = (
+                8 * male + 4 * smiling + 2 * oval_face + black_hair
+        ).tolist()
+
 
     return train_data, test_data
 

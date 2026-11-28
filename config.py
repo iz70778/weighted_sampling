@@ -21,13 +21,13 @@ def parse_args():
     parser.add_argument("--seed", type=int)
     parser.add_argument("--dataset", type=str)
     parser.add_argument("--record_data", type=bool)
-    parser.add_argument("--device")
     parser.add_argument("--test_batchsize", type=int)
     parser.add_argument("--num_clients", type=int)
     parser.add_argument("--dirichlet_alpha", type=float)
     parser.add_argument("--num_samplings", type=int)
-    parser.add_argument("--suffix_path", type=str)
     parser.add_argument("--ddim", type=bool)
+
+    # parser.add_argument("--rounds", type=int)
 
     parser.set_defaults(**config["run"])
 
@@ -48,10 +48,13 @@ def parse_args():
          - cl
          - dfd
      """
-    args.results_path = f"{args.results_path}/{args.dataset}"
-    args.model_path = f"{args.results_path}/models"
-    args.check_path = f"{args.model_path}/checkpoints"
-    args.img_path = f"{args.results_path}/imgs"
+    args.results_path = Path(args.results_path) / args.dataset
+    args.img_path = args.results_path / "imgs"
+    args.model_path = args.results_path / "models"
+    args.check_path = args.model_path / "checkpoints"
+
+    args.img_path.mkdir(parents=True, exist_ok=True)
+    args.check_path.mkdir(parents=True, exist_ok=True)
 
     return args
 

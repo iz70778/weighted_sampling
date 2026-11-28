@@ -12,8 +12,8 @@ from synthesis.syn_utils import load_trained_model, sample_data
 
 if __name__ == "__main__":
     method = "pfdm"
-    img_path = f"{args.img_path}/{method}"
-    os.makedirs(img_path, exist_ok=True)
+    img_path = args.img_path / method
+    img_path.mkdir(parents=True, exist_ok=True)
 
     clients = list(range(args.num_clients))
 
@@ -52,6 +52,6 @@ if __name__ == "__main__":
                 x = (x.clamp(-1, 1) + 1) / 2
 
                 for j, img in enumerate(x):
-                    save_image(img, f"{img_path}/{client}/{i + j:05d}.png")
+                    save_image(img, img_path / f"{client}/{i + j:05d}.png")
 
             del client_model

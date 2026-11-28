@@ -8,7 +8,8 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 
 from config import args
-from data.fetch import fetch_dataset_cifar10, fetch_syn_dataset
+from data.fetch import fetch_dataset_cifar10, fetch_syn_dataset, fetch_dataset_fmnist, fetch_dataset_celeba, \
+    fetch_dataset_tiny_imagenet
 
 
 class PrunableDataset(Dataset):
@@ -156,6 +157,12 @@ def niid_partition(data):
 def get_test_dataloder():
     if args.dataset == "cifar10":
         train_data, test_data = fetch_dataset_cifar10(args)
+    elif args.dataset == "fmnist":
+        train_data, test_data = fetch_dataset_fmnist(args)
+    elif args.dataset == "celeba":
+        train_data, test_data = fetch_dataset_celeba(args)
+    elif args.dataset == "ting_imagenet":
+        train_data, test_data = fetch_dataset_tiny_imagenet(args)
     else:
         raise NotImplementedError
 

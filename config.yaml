@@ -2,27 +2,56 @@ run:
   method: ""
   seed: 0
   dataset: cifar10
-  device: cuda
-  record_data: true
+#  dataset: fmnist
+  record_data: false
   test_batchsize: 256
   num_clients: 5
   dirichlet_alpha: 0.1
   num_samplings: 5000
   ddim: true
+  client_selected_ratio: 1.0
+  results_path: "F:/pycodes/weighted_sampling/results"
+  data_path: "F:/data"
 
 
 training:
-  client_selected_ratio: 1.0
-  rounds: 100
+  T: 1000
+  device: cuda
 
 
 datasets:
   cifar10:
     num_classes: 10
     client_epochs: 1000
+    rounds: 100
     image_size: 32
     batchsize: 64
     cl_batchsize: 128
     lr: 2.0e-4
-    T: 1000
 
+  fmnist:
+    num_classes: 10
+    client_epochs: 100
+    rounds: 100
+    image_size: 64
+    batchsize: 64
+    cl_batchsize: 128
+    lr: 2.0e-4
+
+  tiny_imagenet:
+    num_classes: 200
+    client_epochs: 1000
+    rounds: 100
+    image_size: 64
+    batchsize: 64
+    cl_batchsize: 128
+    lr: 1.0e-4
+
+  celeba:
+    num_classes: 16
+    client_epochs: 500
+    rounds: 100
+    image_size: 64
+    batchsize: 64
+    cl_batchsize: 128
+    lr: 2.0e-4

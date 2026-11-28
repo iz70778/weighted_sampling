@@ -76,7 +76,7 @@ def aggregate_fit_sde(x, t, noises, train_scheduler):
 
     # Standard DDPM score
     epsilon = noises[0]
-    score = -epsilon / (1 - alpha_bar_t)**0.5
+    score = -epsilon / (1 - alpha_bar_t) ** 0.5
 
     # Gaussian noise
     noise = torch.randn_like(x)
@@ -88,16 +88,17 @@ def aggregate_fit_sde(x, t, noises, train_scheduler):
     noise_norm = noise.flatten(1).norm(dim=1).mean()
 
     eta_t = 2 * alpha_t * (
-        snr * noise_norm / grad_norm.clamp_min(1e-8)
-    )**2
+            snr * noise_norm / grad_norm.clamp_min(1e-8)
+    ) ** 2
 
     # Langevin update
-    x = x + eta_t * score + (2 * eta_t)**0.5 * noise
+    x = x + eta_t * score + (2 * eta_t) ** 0.5 * noise
 
     return x
 
+
 if __name__ == "__main__":
-    img_path = f"{args.img_path}/dfd"
+    img_path = args.img_path / "dfd"
     os.makedirs(img_path, exist_ok=True)
 
     client_models = []
@@ -131,4 +132,4 @@ if __name__ == "__main__":
             x = (x.clamp(-1, 1) + 1) / 2
 
             for j, img in enumerate(x):
-                save_image(img, f"{img_path}/{start + j:05d}.png")
+                save_image(img, img_path / f"{start + j:05d}.png")

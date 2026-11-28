@@ -6,17 +6,21 @@ from data.data_loder import get_fl_train_dataloader
 from synthesis.syn_utils import load_trained_model, sample_data
 
 if __name__ == "__main__":
-    img_path = f"{args.img_path}/ws"
+    method = args.method
+
+    img_path = args.img_path / method
     os.makedirs(img_path, exist_ok=True)
 
     clients = list(range(args.num_clients))
     client_loaders = get_fl_train_dataloader()
 
-    weights = get_weights(clients, client_loaders)
-    # weights = [1 / args.num_clients for _ in range(args.num_clients)]
+    if method == "ws":
+        weights = get_weights(clients, client_loaders)
+    else:
+        weights = [1 / args.num_clients for _ in range(args.num_clients)]
 
     for client in clients:
         model = load_trained_model(f"client{client}_os")
         num_samplings = int(weights[client] * args.num_samplings)
         logger.info(f"Generating {num_samplings} images for Client {client}...")
-        sample_data(model, f"{img_path}/{client}", num_samplings)
+        sample_data(model, img_path / str(client), num_samplings)

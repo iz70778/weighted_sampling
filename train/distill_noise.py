@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import torch
 import torch.nn.functional as F
 
@@ -7,7 +5,7 @@ from common_utils import get_diff_model, get_train_scheduler, get_weights, logge
 from config import args
 from data.data_loder import get_fl_train_dataloader
 from synthesis.syn_utils import load_trained_model
-from train.train_utils import get_checkpoint, get_ema_model, get_optimizer, get_warmup_steps, save_model
+from train.train_utils import get_checkpoint, get_ema_model, get_optimizer, get_warmup_steps, save_ema_model
 
 if __name__ == "__main__":
     mode = "direct_ddim"  # direct_ddim | direct_ddpm | pool
@@ -28,6 +26,7 @@ if __name__ == "__main__":
         if last > 0:
             jumps = min(ddim_steps, last)
             grid = [last - i * last // jumps for i in range(jumps + 1)]
+
 
     @torch.no_grad()
     def sample_to(teacher, targets):
@@ -64,7 +63,7 @@ if __name__ == "__main__":
     elif mode == "direct_ddim":
         method += f"_jumps_{ddim_steps}"
     method += f"_c{args.num_clients}_a{args.dirichlet_alpha}_seed{args.seed}"
-    check_path = Path(args.check_path) / method
+    check_path = args.check_path / method
     check_path.mkdir(parents=True, exist_ok=True)
     logger.add_log_path(check_path)
     checkpoint = get_checkpoint(check_path)
@@ -164,4 +163,4 @@ if __name__ == "__main__":
                 "cuda_rng": torch.cuda.get_rng_state(device) if device.type == "cuda" else None,
             }, tmp)
             tmp.replace(dest)
-    save_model(student, ema, method)
+    save_ema_model(student, ema, method)

@@ -4,7 +4,6 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-import os
 from common_utils import get_weights, logger, get_diff_model, get_train_scheduler
 from config import args
 from data.data_loder import get_fl_train_dataloader
@@ -21,13 +20,11 @@ if __name__ == '__main__':
 
     train_scheduler = get_train_scheduler()
 
-    method = "fed_avg"
-    check_path = f"{args.check_path}/{method}"
-    os.makedirs(check_path, exist_ok=True)
+    check_path = args.check_path / "fed_diffuse"
+    check_path.mkdir(parents=True, exist_ok=True)
     logger.add_log_path(check_path)
 
-    start_round = 1
-    for cur_round in tqdm(range(start_round, args.rounds + 1), dynamic_ncols=True):
+    for cur_round in tqdm(range(1, args.rounds + 1), dynamic_ncols=True):
         logger.info(f"Start round {cur_round}-------------------")
         selected_clients = np.random.choice(
             clients, num_clients_per_round, replace=False
@@ -40,10 +37,11 @@ if __name__ == '__main__':
             optimizer = get_optimizer(local_model)
             client_loader = client_loaders[client]
             warmup_steps = get_warmup_steps(client_loader)
+            avg_loss = 0
             for epoch in range(0, num_epochs_per_round):
                 update_step = ((cur_round - 1) * num_epochs_per_round + epoch) * len(client_loader)
                 total_loss = 0.0
-                for x0, _, _, _ in client_loader:
+                for x0, *_ in client_loader:
                     x0 = x0.to(args.device)
                     B = x0.shape[0]
                     t = torch.randint(0, args.T, (B,), device=args.device).long()
@@ -61,7 +59,7 @@ if __name__ == '__main__':
                     optimizer.step()
                     total_loss += loss.item()
                 avg_loss = total_loss / len(client_loader)
-            logger.info(f"Rank {i} - Client {client} Loss = {avg_loss:.4f}")
+            logger.info(f"Round{cur_round} - Rank {i} - Client {client} Loss = {avg_loss:.4f}")
             client_state = local_model.state_dict()
             global_state = weight_aggregate(global_state, client_state, weights[i])
 
@@ -71,6 +69,6 @@ if __name__ == '__main__':
         torch.save({
             "round": cur_round,
             "model": global_state,
-        }, f"{check_path}/fed_avg_{cur_round}.pth")
+        }, check_path / f"{cur_round}.pth")
 
         global_model.load_state_dict(global_state)

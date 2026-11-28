@@ -1,10 +1,8 @@
 from pathlib import Path
 
 import torch
-import torch.nn.functional as F
 from diffusers import EMAModel
 
-import os
 from config import args
 
 
@@ -45,22 +43,18 @@ def get_checkpoint(check_path):
     return checkpoint
 
 
-def save_model(model, ema_model, method):
-    os.makedirs(args.model_path, exist_ok=True)
-
+def save_ema_model(model, ema_model, method):
     ema_model.copy_to(model.parameters())
 
     torch.save(
         model.state_dict(),
-        f"{args.model_path}/{method}.pth",
+        args.model_path / f"{method}.pth",
     )
 
 
 def get_optimizer(model):
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     return optimizer
-
-
 
 
 def weight_aggregate(global_state, local_state, weight):

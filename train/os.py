@@ -1,10 +1,9 @@
 import torch
 
-import os
 from common_utils import logger, get_diff_model, get_train_scheduler
 from config import args
 from data.data_loder import get_fl_train_dataloader, get_cl_train_dataloader, get_syn_train_dataloader
-from train.train_utils import save_model, get_checkpoint, get_ema_model, get_optimizer, get_warmup_steps
+from train.train_utils import save_ema_model, get_checkpoint, get_ema_model, get_optimizer, get_warmup_steps
 
 if __name__ == '__main__':
     method = args.method
@@ -26,8 +25,8 @@ if __name__ == '__main__':
     warmup_steps = get_warmup_steps(train_loader)
     train_scheduler = get_train_scheduler()
 
-    check_path = f"{args.check_path}/{method}"
-    os.makedirs(check_path, exist_ok=True)
+    check_path = args.check_path / method
+    check_path.mkdir(parents=True, exist_ok=True)
     logger.add_log_path(check_path)
     checkpoint = get_checkpoint(check_path)
 
@@ -81,4 +80,4 @@ if __name__ == '__main__':
                 "update_step": update_step,
             }, f"{check_path}/{method}_{epoch}.pth")
 
-    save_model(model, ema_model, method)
+    save_ema_model(model, ema_model, method)
