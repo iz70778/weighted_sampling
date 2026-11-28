@@ -22,7 +22,7 @@ training:
 datasets:
   cifar10:
     num_classes: 10
-    client_epochs: 1000
+    client_epochs: 500
     rounds: 100
     image_size: 32
     batchsize: 64

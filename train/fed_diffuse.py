@@ -69,6 +69,6 @@ if __name__ == '__main__':
         torch.save({
             "round": cur_round,
             "model": global_state,
-        }, check_path / f"{cur_round}.pth")
+        }, check_path / f"fed_diffuse{cur_round}.pth")
 
         global_model.load_state_dict(global_state)

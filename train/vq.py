@@ -49,7 +49,7 @@ def prepare_codebooks():
             torch.save({
                 "cen": torch.from_numpy(kmeans.cluster_centers_),
                 "idxs": dict(zip(idxs, kmeans.labels_.tolist())),
-            }, save_path / f"{client}.pt")
+            }, save_path / f"client{client}_codebook.pt")
 
 
 def train_vq():
@@ -133,7 +133,7 @@ def train_vq():
         torch.save({
             "round": cur_round,
             "model": global_state,
-        }, check_path / f"{cur_round}.pth")
+        }, check_path / f"vq_{cur_round}.pth")
 
         global_model.load_state_dict(global_state)
 

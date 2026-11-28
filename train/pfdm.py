@@ -7,22 +7,25 @@ from common_utils import get_train_scheduler
 from common_utils import logger, get_diff_model
 from config import args
 from data.data_loder import get_fl_train_dataloader
-from train.train_utils import get_optimizer, get_ema_model, save_ema_model, get_warmup_steps
+from train.train_utils import get_optimizer, get_ema_model, save_ema_model, get_warmup_steps, get_checkpoint
 
 if __name__ == '__main__':
     method = "pfdm"
 
-    args.client_epochs = int(args.client_epochs * 0.3)
+    epoch_ratio = 0.3
+    data_ratio = 0.3
+
+    args.client_epochs = int(args.client_epochs * epoch_ratio)
 
     model = get_diff_model()
 
     clients = list(range(args.num_clients))
     client_loaders = get_fl_train_dataloader()
 
-    scheduler = get_train_scheduler()
+    train_scheduler = get_train_scheduler()
 
     radius, depth = (15, 740) if args.dataset == "cifar10" else (35, 850)
-    alpha = float(scheduler.alphas_cumprod[depth - 1])
+    alpha = float(train_scheduler.alphas_cumprod[depth - 1])
     signal_scale = math.sqrt(alpha)
     noise_scale = math.sqrt(1 - alpha)
     ratio = 2 * radius * signal_scale / noise_scale
@@ -32,7 +35,7 @@ if __name__ == '__main__':
     subsets = []
     for client_loader in client_loaders:
         client_dataset = client_loader.dataset
-        train_dataset_size = int(len(client_dataset) * 0.3)
+        train_dataset_size = int(len(client_dataset) * data_ratio)
         indices = torch.randperm(len(client_dataset))[:train_dataset_size].tolist()
         subsets.append(Subset(client_dataset, indices))
     release_loader = DataLoader(
@@ -56,10 +59,31 @@ if __name__ == '__main__':
     optimizer = get_optimizer(model)
     ema_model = get_ema_model(model)
     warmup_steps = get_warmup_steps(train_loader)
-    train_scheduler = get_train_scheduler()
-    update_step = 0
+
+    check_path = args.check_path / method
+    check_path.mkdir(parents=True, exist_ok=True)
+    logger.add_log_path(check_path)
+    checkpoint = get_checkpoint(check_path)
+    if checkpoint is None:
+        logger.info(f"Method {method} starts training from scratch")
+        start_epoch = 0
+        update_step = 0
+    else:
+        model.load_state_dict(checkpoint["model"])
+        ema_model.load_state_dict(checkpoint["ema"])
+        optimizer.load_state_dict(checkpoint["optimizer"])
+
+        start_epoch = checkpoint["epoch"]
+        update_step = checkpoint["update_step"]
+
+        if start_epoch >= args.client_epochs:
+            logger.info(f"Method {method} has completed training")
+        else:
+            logger.info(f"Method {method} start training "
+                        f"from epoch {start_epoch}")
+
     model.train()
-    for epoch in range(1, args.client_epochs + 1):
+    for epoch in range(start_epoch + 1, args.client_epochs + 1):
         total_loss = 0.0
         for batch in train_loader:
             batch = batch.to(args.device)
@@ -81,5 +105,13 @@ if __name__ == '__main__':
             ema_model.step(model.parameters())
         avg_loss = total_loss / len(train_loader)
         logger.info(f"Method {method} - Epoch {epoch}: Loss = {avg_loss:.4f}")
+        if epoch % 100 == 0 or epoch == args.client_epochs:
+            torch.save({
+                "epoch": epoch,
+                "model": model.state_dict(),
+                "ema": ema_model.state_dict(),
+                "optimizer": optimizer.state_dict(),
+                "update_step": update_step,
+            }, f"{check_path}/{method}_{epoch}.pth")
 
     save_ema_model(model, ema_model, method)

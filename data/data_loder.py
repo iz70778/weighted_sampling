@@ -154,7 +154,7 @@ def niid_partition(data):
     return clients_indices
 
 
-def get_test_dataloder():
+def fetch_dataset():
     if args.dataset == "cifar10":
         train_data, test_data = fetch_dataset_cifar10(args)
     elif args.dataset == "fmnist":
@@ -165,6 +165,11 @@ def get_test_dataloder():
         train_data, test_data = fetch_dataset_tiny_imagenet(args)
     else:
         raise NotImplementedError
+    return train_data, test_data
+
+
+def get_test_dataloder():
+    train_data, test_data = fetch_dataset()
 
     test_loader = DataLoader(
         PrunableDataset(test_data, range(len(test_data))),
@@ -175,10 +180,7 @@ def get_test_dataloder():
 
 
 def get_cl_train_dataloader():
-    if args.dataset == "cifar10":
-        train_data, test_data = fetch_dataset_cifar10(args)
-    else:
-        raise NotImplementedError
+    train_data, test_data = fetch_dataset()
 
     train_loader = DataLoader(
         PrunableDataset(train_data, range(len(train_data))),
@@ -190,10 +192,7 @@ def get_cl_train_dataloader():
 
 
 def get_fl_train_dataloader():
-    if args.dataset == "cifar10":
-        train_data, test_data = fetch_dataset_cifar10(args)
-    else:
-        raise NotImplementedError
+    train_data, test_data = fetch_dataset()
 
     clients_indices = load_or_create_partition(train_data)
 
